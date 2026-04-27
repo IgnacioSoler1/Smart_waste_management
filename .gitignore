@@ -8,6 +8,7 @@
 !.env.example
 *.tfvars
 *.tfvars.json
+claude-set.txt
 
 # ---- Terraform ----
 terraform/.terraform/
