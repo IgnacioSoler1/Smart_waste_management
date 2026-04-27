@@ -1,0 +1,74 @@
+services:
+
+  # ── Preparación de datos (llamado por build-data.sh) ──────
+  #
+  # Ejecuta el pipeline OSRM sobre el PBF ya descargado en ./data/.
+  # NO descarga el archivo — eso lo hace build-data.sh en el host,
+  # porque la imagen de OSRM (Debian Stretch EOL) no tiene curl/wget.
+  #
+  # NO llamar directamente. Usar:
+  #   ./build-data.sh
+  #
+  osrm-prepare:
+    image: osrm/osrm-backend:latest
+    platform: linux/amd64
+    volumes:
+      - ./data:/data
+      - ./truck-profile.lua:/usr/local/share/osrm/profiles/truck-profile.lua
+    working_dir: /data
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        set -euo pipefail
+
+        PBF="uruguay-latest.osm.pbf"
+
+        if [ ! -f "$$PBF" ]; then
+          echo "ERROR: $$PBF no encontrado en /data/"
+          echo "  Corré primero: ./build-data.sh"
+          exit 1
+        fi
+
+        echo "==> [2/4] osrm-extract (perfil: truck-profile.lua)..."
+        osrm-extract -p /usr/local/share/osrm/profiles/truck-profile.lua "$$PBF"
+
+        echo "==> [3/4] osrm-partition..."
+        osrm-partition uruguay-latest.osrm
+
+        echo "==> [4/4] osrm-customize..."
+        osrm-customize uruguay-latest.osrm
+
+        echo "==> Procesamiento OSRM completado ✓"
+
+  # ── Servidor de routing ────────────────────────────────────
+  #
+  # Levanta osrm-routed con los datos preparados por build-data.sh.
+  # Requiere que ./data/uruguay-latest.osrm exista.
+  #
+  # Uso:
+  #   docker compose up osrm-server
+  #
+  # API disponible en http://localhost:5000
+  #
+  osrm-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    platform: linux/amd64
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "osrm-routed",
+          "--version",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s

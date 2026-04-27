@@ -1,0 +1,59 @@
+# ============================================
+# SmartWaste MVD — .gitignore
+# ============================================
+
+# ---- Secrets & Environment ----
+.env
+.env.*
+!.env.example
+*.tfvars
+*.tfvars.json
+
+# ---- Terraform ----
+terraform/.terraform/
+terraform/.build/
+terraform/terraform.tfstate
+terraform/terraform.tfstate.*
+terraform/.terraform.lock.hcl
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+*.egg
+.venv/
+venv/
+.pytest_cache/
+
+# ---- Node.js ----
+node_modules/
+dist/
+*.tsbuildinfo
+.eslintcache
+
+# ---- OSRM data (large binary files) ----
+osrm/data/
+
+# ---- Lambda deployment packages ----
+*.zip
+
+# ---- IDE & editors ----
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ---- macOS ----
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# ---- Logs ----
+*.log
+npm-debug.log*
+
+# ---- Claude Code agent memory (contains AWS account IDs) ----
+.claude/agent-memory/

@@ -1,0 +1,8 @@
+# Archivos generados por build.sh — no commitear
+.build/
+
+# Estado local de Terraform
+terraform.tfstate
+terraform.tfstate.backup
+.terraform/
+.terraform.lock.hcl

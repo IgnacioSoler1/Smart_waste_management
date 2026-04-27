@@ -1,0 +1,17 @@
+# Dependencias de la Lambda route-optimizer
+#
+# boto3 ya viene pre-instalado en el runtime de Lambda (Python 3.11).
+#
+# NOTA DE PACKAGING:
+#   ortools > 100 MB descomprimido → el zip supera el límite de 50 MB de Lambda.
+#   Por eso el zip se sube a S3 (s3_bucket en Terraform) en vez de subirse directo.
+#   Ver build.sh para el proceso de construcción.
+#
+# Para cross-compilar desde macOS a Linux x86_64 (plataforma de Lambda):
+#   pip install -r requirements.txt -t build/ \
+#     --platform manylinux2014_x86_64 --only-binary=:all: \
+#     --python-version 3.11 --implementation cp
+#   (build.sh hace esto automáticamente)
+
+requests==2.31.0
+ortools==9.8.3296

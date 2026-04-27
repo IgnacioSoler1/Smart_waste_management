@@ -1,0 +1,24 @@
+FROM osrm/osrm-backend:latest
+
+# curl para el health check de ECS (no incluido en la imagen base OSRM).
+# La imagen base usa Debian Stretch (EOL) — reemplazar con archive mirrors.
+RUN printf 'deb http://archive.debian.org/debian stretch main\ndeb http://archive.debian.org/debian-security stretch/updates main\n' \
+        > /etc/apt/sources.list \
+    && apt-get update -o Acquire::Check-Valid-Until=false \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copiar los archivos pre-procesados por build-data.sh.
+# El PBF original no es necesario en runtime.
+COPY data/uruguay-latest.osrm*  /data/
+
+WORKDIR /data
+EXPOSE 5000
+
+# MLD (Multi-Level Dijkstra) — óptimo para Table API con muchos orígenes.
+# --max-table-size 10000 cubre circuitos de ~100 contenedores con margen.
+CMD ["osrm-routed", \
+     "--algorithm", "mld", \
+     "--port", "5000", \
+     "--max-table-size", "10000", \
+     "/data/uruguay-latest.osrm"]

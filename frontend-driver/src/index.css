@@ -1,0 +1,70 @@
+/* Reset y base */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+               'Helvetica Neue', Arial, sans-serif;
+  -webkit-text-size-adjust: 100%;
+  font-size: 16px;
+}
+
+html, body, #root {
+  height: 100%;
+  height: 100dvh;
+}
+
+body {
+  background: #f9fafb;
+  color: #111827;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar delgado en la lista de paradas */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 2px;
+}
+
+/* Toast animation */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* Fix Leaflet z-index en contextos de stacking */
+.leaflet-pane { z-index: 1; }
+.leaflet-top, .leaflet-bottom { z-index: 2; }
+
+/* Responsive: en pantallas anchas el sidebar siempre visible */
+@media (min-width: 768px) {
+  /* El sidebar en desktop no es un drawer flotante sino fijo al lado del mapa */
+  /* Lo implementamos sobreescribiendo el position/transform desde JS en la query */
+}
+
+/* Hover en botones */
+button:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+button:active:not(:disabled) {
+  filter: brightness(0.94);
+}
+button:disabled {
+  cursor: default;
+}
+
+/* Inputs y selects: quitar outline por defecto, poner uno propio */
+input:focus, select:focus {
+  outline: 2px solid #1e6b3c;
+  outline-offset: 0;
+}

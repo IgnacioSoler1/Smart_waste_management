@@ -1,0 +1,14 @@
+{
+  "depot_felipe_cardoso": {
+    "name": "Sitio Disposición Final Felipe Cardoso",
+    "latitude": -34.8347,
+    "longitude": -56.0967,
+    "type": "disposal_site"
+  },
+  "depot_estacion_transferencia": {
+    "name": "Estación de Transferencia (Ruta 102)",
+    "latitude": -34.8128,
+    "longitude": -56.2645,
+    "type": "transfer_station"
+  }
+}

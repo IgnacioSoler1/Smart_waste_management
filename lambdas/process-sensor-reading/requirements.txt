@@ -1,0 +1,6 @@
+# boto3 ya viene incluido en el runtime de Lambda (Python 3.11).
+# No se necesitan dependencias adicionales para este handler.
+#
+# Si en el futuro se añaden dependencias externas, agregarlas aquí
+# y actualizar el bloque "source_dir" en terraform/lambda.tf para
+# incluir un paso de pip install.

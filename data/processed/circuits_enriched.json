@@ -1,0 +1,2764 @@
+{
+  "A_DU_RM_CL_103": {
+    "circuit_id": "A_DU_RM_CL_103",
+    "municipality": "A",
+    "container_count": 30,
+    "centroid_lat": -34.871537,
+    "centroid_lon": -56.239095,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "A_DU_RM_CL_104": {
+    "circuit_id": "A_DU_RM_CL_104",
+    "municipality": "A",
+    "container_count": 86,
+    "centroid_lat": -34.866761,
+    "centroid_lon": -56.230049,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "A_DU_RM_CL_105": {
+    "circuit_id": "A_DU_RM_CL_105",
+    "municipality": "A",
+    "container_count": 82,
+    "centroid_lat": -34.860227,
+    "centroid_lon": -56.237083,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "A_DU_RM_CL_106": {
+    "circuit_id": "A_DU_RM_CL_106",
+    "municipality": "A",
+    "container_count": 85,
+    "centroid_lat": -34.861008,
+    "centroid_lon": -56.221317,
+    "dominant_shift": "night",
+    "collection_days": [
+      "MARTES",
+      "JUEVES",
+      "DOMINGO"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "A_DU_RM_CL_107": {
+    "circuit_id": "A_DU_RM_CL_107",
+    "municipality": "A",
+    "container_count": 80,
+    "centroid_lat": -34.852369,
+    "centroid_lon": -56.230194,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "A_DU_RM_CL_108": {
+    "circuit_id": "A_DU_RM_CL_108",
+    "municipality": "A",
+    "container_count": 101,
+    "centroid_lat": -34.852975,
+    "centroid_lon": -56.217207,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "A_DU_RM_CL_109": {
+    "circuit_id": "A_DU_RM_CL_109",
+    "municipality": "A",
+    "container_count": 86,
+    "centroid_lat": -34.838961,
+    "centroid_lon": -56.238224,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "A_DU_RM_CL_110": {
+    "circuit_id": "A_DU_RM_CL_110",
+    "municipality": "A",
+    "container_count": 80,
+    "centroid_lat": -34.848025,
+    "centroid_lon": -56.241579,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "MARTES",
+      "JUEVES"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "A_DU_RM_CL_111": {
+    "circuit_id": "A_DU_RM_CL_111",
+    "municipality": "A",
+    "container_count": 90,
+    "centroid_lat": -34.839694,
+    "centroid_lon": -56.251924,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "MARTES",
+      "JUEVES"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "A_DU_RM_CL_112": {
+    "circuit_id": "A_DU_RM_CL_112",
+    "municipality": "A",
+    "container_count": 105,
+    "centroid_lat": -34.849383,
+    "centroid_lon": -56.274637,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "MARTES",
+      "JUEVES"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "A_DU_RM_CL_113": {
+    "circuit_id": "A_DU_RM_CL_113",
+    "municipality": "A",
+    "container_count": 98,
+    "centroid_lat": -34.861165,
+    "centroid_lon": -56.260504,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "MARTES",
+      "JUEVES"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "A_DU_RM_CL_114": {
+    "circuit_id": "A_DU_RM_CL_114",
+    "municipality": "A",
+    "container_count": 64,
+    "centroid_lat": -34.870919,
+    "centroid_lon": -56.260087,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "MARTES",
+      "JUEVES"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "A_DU_RM_CL_116": {
+    "circuit_id": "A_DU_RM_CL_116",
+    "municipality": "A",
+    "container_count": 99,
+    "centroid_lat": -34.837717,
+    "centroid_lon": -56.26687,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "MARTES",
+      "JUEVES"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "A_DU_RM_CL_202": {
+    "circuit_id": "A_DU_RM_CL_202",
+    "municipality": "A",
+    "container_count": 62,
+    "centroid_lat": -34.890463,
+    "centroid_lon": -56.252766,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "A_DU_RM_CL_203": {
+    "circuit_id": "A_DU_RM_CL_203",
+    "municipality": "A",
+    "container_count": 50,
+    "centroid_lat": -34.884635,
+    "centroid_lon": -56.25931,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "A_DU_RM_CL_204": {
+    "circuit_id": "A_DU_RM_CL_204",
+    "municipality": "A",
+    "container_count": 46,
+    "centroid_lat": -34.880263,
+    "centroid_lon": -56.259228,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "MARTES",
+      "JUEVES"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "A_DU_RM_CL_205": {
+    "circuit_id": "A_DU_RM_CL_205",
+    "municipality": "A",
+    "container_count": 48,
+    "centroid_lat": -34.876975,
+    "centroid_lon": -56.259475,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "MARTES",
+      "JUEVES"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "A_DU_RM_CL_206": {
+    "circuit_id": "A_DU_RM_CL_206",
+    "municipality": "",
+    "container_count": 59,
+    "centroid_lat": -34.880122,
+    "centroid_lon": -56.249419,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "MARTES",
+      "JUEVES"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "B_DU_RM_CL_01": {
+    "circuit_id": "B_DU_RM_CL_01",
+    "municipality": "B",
+    "container_count": 146,
+    "centroid_lat": -34.906853,
+    "centroid_lon": -56.203842,
+    "dominant_shift": "afternoon",
+    "collection_days": [
+      "LUNES"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "B_DU_RM_CL_02": {
+    "circuit_id": "B_DU_RM_CL_02",
+    "municipality": "B",
+    "container_count": 174,
+    "centroid_lat": -34.906525,
+    "centroid_lon": -56.193466,
+    "dominant_shift": "afternoon",
+    "collection_days": [
+      "LUNES"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "B_DU_RM_CL_03": {
+    "circuit_id": "B_DU_RM_CL_03",
+    "municipality": "B",
+    "container_count": 157,
+    "centroid_lat": -34.904662,
+    "centroid_lon": -56.185893,
+    "dominant_shift": "afternoon",
+    "collection_days": [
+      "LUNES"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "B_DU_RM_CL_04": {
+    "circuit_id": "B_DU_RM_CL_04",
+    "municipality": "B",
+    "container_count": 155,
+    "centroid_lat": -34.897272,
+    "centroid_lon": -56.173549,
+    "dominant_shift": "night",
+    "collection_days": [
+      "VIERNES",
+      "DOMINGO"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "B_DU_RM_CL_05": {
+    "circuit_id": "B_DU_RM_CL_05",
+    "municipality": "B",
+    "container_count": 147,
+    "centroid_lat": -34.908733,
+    "centroid_lon": -56.179629,
+    "dominant_shift": "night",
+    "collection_days": [
+      "VIERNES",
+      "DOMINGO"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "B_DU_RM_CL_06": {
+    "circuit_id": "B_DU_RM_CL_06",
+    "municipality": "B",
+    "container_count": 154,
+    "centroid_lat": -34.90179,
+    "centroid_lon": -56.169635,
+    "dominant_shift": "night",
+    "collection_days": [
+      "VIERNES",
+      "DOMINGO"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "B_DU_RM_CL_07": {
+    "circuit_id": "B_DU_RM_CL_07",
+    "municipality": "B",
+    "container_count": 163,
+    "centroid_lat": -34.908992,
+    "centroid_lon": -56.169093,
+    "dominant_shift": "night",
+    "collection_days": [
+      "VIERNES",
+      "DOMINGO"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "B_DU_RM_CL_101": {
+    "circuit_id": "B_DU_RM_CL_101",
+    "municipality": "B",
+    "container_count": 108,
+    "centroid_lat": -34.895569,
+    "centroid_lon": -56.188069,
+    "dominant_shift": "night",
+    "collection_days": [
+      "MARTES",
+      "JUEVES",
+      "DOMINGO"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "B_DU_RM_CL_102": {
+    "circuit_id": "B_DU_RM_CL_102",
+    "municipality": "B",
+    "container_count": 94,
+    "centroid_lat": -34.891174,
+    "centroid_lon": -56.174918,
+    "dominant_shift": "night",
+    "collection_days": [
+      "MARTES",
+      "JUEVES",
+      "DOMINGO"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "B_DU_RM_CL_103": {
+    "circuit_id": "B_DU_RM_CL_103",
+    "municipality": "B",
+    "container_count": 46,
+    "centroid_lat": -34.917625,
+    "centroid_lon": -56.164139,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "DOMINGO"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "CH_DU_RM_CL_101": {
+    "circuit_id": "CH_DU_RM_CL_101",
+    "municipality": "CH",
+    "container_count": 71,
+    "centroid_lat": -34.922193,
+    "centroid_lon": -56.158304,
+    "dominant_shift": "night",
+    "collection_days": [
+      "VIERNES",
+      "DOMINGO"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "CH_DU_RM_CL_102": {
+    "circuit_id": "CH_DU_RM_CL_102",
+    "municipality": "CH",
+    "container_count": 77,
+    "centroid_lat": -34.914218,
+    "centroid_lon": -56.158313,
+    "dominant_shift": "night",
+    "collection_days": [
+      "VIERNES",
+      "DOMINGO"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "CH_DU_RM_CL_103": {
+    "circuit_id": "CH_DU_RM_CL_103",
+    "municipality": "CH",
+    "container_count": 56,
+    "centroid_lat": -34.918699,
+    "centroid_lon": -56.152199,
+    "dominant_shift": "night",
+    "collection_days": [
+      "VIERNES",
+      "DOMINGO"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "CH_DU_RM_CL_104": {
+    "circuit_id": "CH_DU_RM_CL_104",
+    "municipality": "CH",
+    "container_count": 53,
+    "centroid_lat": -34.911859,
+    "centroid_lon": -56.151055,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "DOMINGO"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "CH_DU_RM_CL_105": {
+    "circuit_id": "CH_DU_RM_CL_105",
+    "municipality": "CH",
+    "container_count": 66,
+    "centroid_lat": -34.907422,
+    "centroid_lon": -56.159007,
+    "dominant_shift": "night",
+    "collection_days": [
+      "VIERNES",
+      "DOMINGO"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "CH_DU_RM_CL_106": {
+    "circuit_id": "CH_DU_RM_CL_106",
+    "municipality": "CH",
+    "container_count": 62,
+    "centroid_lat": -34.905388,
+    "centroid_lon": -56.147466,
+    "dominant_shift": "night",
+    "collection_days": [
+      "VIERNES",
+      "DOMINGO"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "CH_DU_RM_CL_107": {
+    "circuit_id": "CH_DU_RM_CL_107",
+    "municipality": "CH",
+    "container_count": 69,
+    "centroid_lat": -34.909221,
+    "centroid_lon": -56.146647,
+    "dominant_shift": "night",
+    "collection_days": [
+      "VIERNES",
+      "DOMINGO"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "CH_DU_RM_CL_108": {
+    "circuit_id": "CH_DU_RM_CL_108",
+    "municipality": "CH",
+    "container_count": 55,
+    "centroid_lat": -34.90603,
+    "centroid_lon": -56.138,
+    "dominant_shift": "night",
+    "collection_days": [
+      "VIERNES",
+      "DOMINGO"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "CH_DU_RM_CL_109": {
+    "circuit_id": "CH_DU_RM_CL_109",
+    "municipality": "CH",
+    "container_count": 53,
+    "centroid_lat": -34.909954,
+    "centroid_lon": -56.139537,
+    "dominant_shift": "night",
+    "collection_days": [
+      "VIERNES",
+      "DOMINGO"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "CH_DU_RM_CL_110": {
+    "circuit_id": "CH_DU_RM_CL_110",
+    "municipality": "CH",
+    "container_count": 36,
+    "centroid_lat": -34.897854,
+    "centroid_lon": -56.161236,
+    "dominant_shift": "night",
+    "collection_days": [
+      "MARTES",
+      "JUEVES",
+      "DOMINGO"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "CH_DU_RM_CL_111": {
+    "circuit_id": "CH_DU_RM_CL_111",
+    "municipality": "CH",
+    "container_count": 47,
+    "centroid_lat": -34.901636,
+    "centroid_lon": -56.156157,
+    "dominant_shift": "night",
+    "collection_days": [
+      "MARTES",
+      "JUEVES",
+      "DOMINGO"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "CH_DU_RM_CL_112": {
+    "circuit_id": "CH_DU_RM_CL_112",
+    "municipality": "CH",
+    "container_count": 45,
+    "centroid_lat": -34.899909,
+    "centroid_lon": -56.149385,
+    "dominant_shift": "night",
+    "collection_days": [
+      "MARTES",
+      "JUEVES",
+      "DOMINGO"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "CH_DU_RM_CL_113": {
+    "circuit_id": "CH_DU_RM_CL_113",
+    "municipality": "CH",
+    "container_count": 36,
+    "centroid_lat": -34.899216,
+    "centroid_lon": -56.143065,
+    "dominant_shift": "night",
+    "collection_days": [
+      "MARTES",
+      "JUEVES",
+      "DOMINGO"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "CH_DU_RM_CL_114": {
+    "circuit_id": "CH_DU_RM_CL_114",
+    "municipality": "CH",
+    "container_count": 42,
+    "centroid_lat": -34.897533,
+    "centroid_lon": -56.136975,
+    "dominant_shift": "night",
+    "collection_days": [
+      "MARTES",
+      "JUEVES",
+      "DOMINGO"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "CH_DU_RM_CL_115": {
+    "circuit_id": "CH_DU_RM_CL_115",
+    "municipality": "CH",
+    "container_count": 50,
+    "centroid_lat": -34.896335,
+    "centroid_lon": -56.130848,
+    "dominant_shift": "night",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "CH_DU_RM_CL_116": {
+    "circuit_id": "CH_DU_RM_CL_116",
+    "municipality": "CH",
+    "container_count": 42,
+    "centroid_lat": -34.89299,
+    "centroid_lon": -56.14745,
+    "dominant_shift": "night",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "CH_DU_RM_CL_117": {
+    "circuit_id": "CH_DU_RM_CL_117",
+    "municipality": "CH",
+    "container_count": 47,
+    "centroid_lat": -34.891009,
+    "centroid_lon": -56.143219,
+    "dominant_shift": "night",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "CH_DU_RM_CL_118": {
+    "circuit_id": "CH_DU_RM_CL_118",
+    "municipality": "CH",
+    "container_count": 47,
+    "centroid_lat": -34.890577,
+    "centroid_lon": -56.13692,
+    "dominant_shift": "night",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "CH_DU_RM_CL_119": {
+    "circuit_id": "CH_DU_RM_CL_119",
+    "municipality": "CH",
+    "container_count": 42,
+    "centroid_lat": -34.890455,
+    "centroid_lon": -56.162297,
+    "dominant_shift": "night",
+    "collection_days": [
+      "VIERNES",
+      "DOMINGO"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "CH_DU_RM_CL_120": {
+    "circuit_id": "CH_DU_RM_CL_120",
+    "municipality": "CH",
+    "container_count": 54,
+    "centroid_lat": -34.887247,
+    "centroid_lon": -56.157723,
+    "dominant_shift": "night",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "CH_DU_RM_CL_121": {
+    "circuit_id": "CH_DU_RM_CL_121",
+    "municipality": "CH",
+    "container_count": 57,
+    "centroid_lat": -34.885015,
+    "centroid_lon": -56.153742,
+    "dominant_shift": "night",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "CH_DU_RM_CL_122": {
+    "circuit_id": "CH_DU_RM_CL_122",
+    "municipality": "CH",
+    "container_count": 34,
+    "centroid_lat": -34.909298,
+    "centroid_lon": -56.155241,
+    "dominant_shift": "night",
+    "collection_days": [
+      "VIERNES",
+      "DOMINGO"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "CH_DU_RM_CL_123": {
+    "circuit_id": "CH_DU_RM_CL_123",
+    "municipality": "CH",
+    "container_count": 20,
+    "centroid_lat": -34.895373,
+    "centroid_lon": -56.144323,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "DOMINGO"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "C_DU_RM_CL_101": {
+    "circuit_id": "C_DU_RM_CL_101",
+    "municipality": "C",
+    "container_count": 100,
+    "centroid_lat": -34.886762,
+    "centroid_lon": -56.189167,
+    "dominant_shift": "night",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "C_DU_RM_CL_102": {
+    "circuit_id": "C_DU_RM_CL_102",
+    "municipality": "C",
+    "container_count": 108,
+    "centroid_lat": -34.884782,
+    "centroid_lon": -56.181057,
+    "dominant_shift": "night",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "C_DU_RM_CL_103": {
+    "circuit_id": "C_DU_RM_CL_103",
+    "municipality": "C",
+    "container_count": 115,
+    "centroid_lat": -34.883977,
+    "centroid_lon": -56.171302,
+    "dominant_shift": "night",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "C_DU_RM_CL_104": {
+    "circuit_id": "C_DU_RM_CL_104",
+    "municipality": "C",
+    "container_count": 111,
+    "centroid_lat": -34.880106,
+    "centroid_lon": -56.160378,
+    "dominant_shift": "night",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "C_DU_RM_CL_105": {
+    "circuit_id": "C_DU_RM_CL_105",
+    "municipality": "C",
+    "container_count": 112,
+    "centroid_lat": -34.873135,
+    "centroid_lon": -56.164454,
+    "dominant_shift": "night",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "C_DU_RM_CL_106": {
+    "circuit_id": "C_DU_RM_CL_106",
+    "municipality": "C",
+    "container_count": 95,
+    "centroid_lat": -34.877661,
+    "centroid_lon": -56.175079,
+    "dominant_shift": "night",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "C_DU_RM_CL_107": {
+    "circuit_id": "C_DU_RM_CL_107",
+    "municipality": "C",
+    "container_count": 100,
+    "centroid_lat": -34.875007,
+    "centroid_lon": -56.180512,
+    "dominant_shift": "night",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "C_DU_RM_CL_108": {
+    "circuit_id": "C_DU_RM_CL_108",
+    "municipality": "C",
+    "container_count": 109,
+    "centroid_lat": -34.875701,
+    "centroid_lon": -56.189843,
+    "dominant_shift": "night",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "C_DU_RM_CL_109": {
+    "circuit_id": "C_DU_RM_CL_109",
+    "municipality": "C",
+    "container_count": 97,
+    "centroid_lat": -34.875981,
+    "centroid_lon": -56.198716,
+    "dominant_shift": "night",
+    "collection_days": [
+      "MARTES",
+      "JUEVES",
+      "DOMINGO"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "C_DU_RM_CL_110": {
+    "circuit_id": "C_DU_RM_CL_110",
+    "municipality": "C",
+    "container_count": 102,
+    "centroid_lat": -34.864783,
+    "centroid_lon": -56.172085,
+    "dominant_shift": "night",
+    "collection_days": [
+      "MARTES",
+      "JUEVES",
+      "DOMINGO"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "C_DU_RM_CL_111": {
+    "circuit_id": "C_DU_RM_CL_111",
+    "municipality": "C",
+    "container_count": 92,
+    "centroid_lat": -34.866812,
+    "centroid_lon": -56.18146,
+    "dominant_shift": "night",
+    "collection_days": [
+      "MARTES",
+      "JUEVES",
+      "DOMINGO"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "C_DU_RM_CL_112": {
+    "circuit_id": "C_DU_RM_CL_112",
+    "municipality": "C",
+    "container_count": 105,
+    "centroid_lat": -34.865563,
+    "centroid_lon": -56.191715,
+    "dominant_shift": "night",
+    "collection_days": [
+      "MARTES",
+      "JUEVES",
+      "DOMINGO"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "C_DU_RM_CL_113": {
+    "circuit_id": "C_DU_RM_CL_113",
+    "municipality": "C",
+    "container_count": 102,
+    "centroid_lat": -34.856982,
+    "centroid_lon": -56.183702,
+    "dominant_shift": "night",
+    "collection_days": [
+      "MARTES",
+      "JUEVES",
+      "DOMINGO"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "C_DU_RM_CL_114": {
+    "circuit_id": "C_DU_RM_CL_114",
+    "municipality": "C",
+    "container_count": 109,
+    "centroid_lat": -34.855372,
+    "centroid_lon": -56.194402,
+    "dominant_shift": "night",
+    "collection_days": [
+      "MARTES",
+      "JUEVES"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "C_DU_RM_CL_115": {
+    "circuit_id": "C_DU_RM_CL_115",
+    "municipality": "C",
+    "container_count": 96,
+    "centroid_lat": -34.867366,
+    "centroid_lon": -56.202251,
+    "dominant_shift": "night",
+    "collection_days": [
+      "MARTES",
+      "JUEVES",
+      "DOMINGO"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "C_DU_RM_CL_116": {
+    "circuit_id": "C_DU_RM_CL_116",
+    "municipality": "C",
+    "container_count": 41,
+    "centroid_lat": -34.868723,
+    "centroid_lon": -56.209258,
+    "dominant_shift": "night",
+    "collection_days": [
+      "MARTES",
+      "JUEVES",
+      "DOMINGO"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "D_DU_RM_CL_101": {
+    "circuit_id": "D_DU_RM_CL_101",
+    "municipality": "D",
+    "container_count": 46,
+    "centroid_lat": -34.87708,
+    "centroid_lon": -56.150567,
+    "dominant_shift": "night",
+    "collection_days": [
+      "MARTES",
+      "JUEVES",
+      "DOMINGO"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "D_DU_RM_CL_102": {
+    "circuit_id": "D_DU_RM_CL_102",
+    "municipality": "D",
+    "container_count": 58,
+    "centroid_lat": -34.872588,
+    "centroid_lon": -56.146016,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "D_DU_RM_CL_103": {
+    "circuit_id": "D_DU_RM_CL_103",
+    "municipality": "D",
+    "container_count": 51,
+    "centroid_lat": -34.87015,
+    "centroid_lon": -56.137806,
+    "dominant_shift": "night",
+    "collection_days": [
+      "MARTES",
+      "JUEVES",
+      "DOMINGO"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "D_DU_RM_CL_104": {
+    "circuit_id": "D_DU_RM_CL_104",
+    "municipality": "D",
+    "container_count": 47,
+    "centroid_lat": -34.867538,
+    "centroid_lon": -56.143191,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "MARTES",
+      "JUEVES",
+      "DOMINGO"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "D_DU_RM_CL_105": {
+    "circuit_id": "D_DU_RM_CL_105",
+    "municipality": "D",
+    "container_count": 47,
+    "centroid_lat": -34.86795,
+    "centroid_lon": -56.152563,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "MARTES",
+      "JUEVES",
+      "DOMINGO"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "D_DU_RM_CL_106": {
+    "circuit_id": "D_DU_RM_CL_106",
+    "municipality": "D",
+    "container_count": 47,
+    "centroid_lat": -34.862832,
+    "centroid_lon": -56.144116,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "MARTES",
+      "JUEVES",
+      "DOMINGO"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "D_DU_RM_CL_107": {
+    "circuit_id": "D_DU_RM_CL_107",
+    "municipality": "D",
+    "container_count": 46,
+    "centroid_lat": -34.856857,
+    "centroid_lon": -56.147373,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "MARTES",
+      "JUEVES",
+      "DOMINGO"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "D_DU_RM_CL_108": {
+    "circuit_id": "D_DU_RM_CL_108",
+    "municipality": "D",
+    "container_count": 51,
+    "centroid_lat": -34.862476,
+    "centroid_lon": -56.162089,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "MARTES",
+      "JUEVES",
+      "DOMINGO"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "D_DU_RM_CL_109": {
+    "circuit_id": "D_DU_RM_CL_109",
+    "municipality": "D",
+    "container_count": 48,
+    "centroid_lat": -34.85769,
+    "centroid_lon": -56.156879,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "MARTES",
+      "JUEVES",
+      "DOMINGO"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "D_DU_RM_CL_110": {
+    "circuit_id": "D_DU_RM_CL_110",
+    "municipality": "D",
+    "container_count": 45,
+    "centroid_lat": -34.852751,
+    "centroid_lon": -56.153904,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "MARTES",
+      "JUEVES",
+      "DOMINGO"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "D_DU_RM_CL_111": {
+    "circuit_id": "D_DU_RM_CL_111",
+    "municipality": "D",
+    "container_count": 98,
+    "centroid_lat": -34.855212,
+    "centroid_lon": -56.168203,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "D_DU_RM_CL_112": {
+    "circuit_id": "D_DU_RM_CL_112",
+    "municipality": "D",
+    "container_count": 99,
+    "centroid_lat": -34.849774,
+    "centroid_lon": -56.176611,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "D_DU_RM_CL_113": {
+    "circuit_id": "D_DU_RM_CL_113",
+    "municipality": "D",
+    "container_count": 98,
+    "centroid_lat": -34.844062,
+    "centroid_lon": -56.163566,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "D_DU_RM_CL_114": {
+    "circuit_id": "D_DU_RM_CL_114",
+    "municipality": "D",
+    "container_count": 72,
+    "centroid_lat": -34.837557,
+    "centroid_lon": -56.154443,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "MARTES",
+      "JUEVES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "D_DU_RM_CL_115": {
+    "circuit_id": "D_DU_RM_CL_115",
+    "municipality": "D",
+    "container_count": 71,
+    "centroid_lat": -34.832269,
+    "centroid_lon": -56.170038,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "MARTES",
+      "JUEVES"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "D_DU_RM_CL_116": {
+    "circuit_id": "D_DU_RM_CL_116",
+    "municipality": "D",
+    "container_count": 89,
+    "centroid_lat": -34.829381,
+    "centroid_lon": -56.15348,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "MARTES",
+      "JUEVES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "D_DU_RM_CL_117": {
+    "circuit_id": "D_DU_RM_CL_117",
+    "municipality": "D",
+    "container_count": 93,
+    "centroid_lat": -34.824841,
+    "centroid_lon": -56.171338,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "MARTES",
+      "JUEVES"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "D_DU_RM_CL_118": {
+    "circuit_id": "D_DU_RM_CL_118",
+    "municipality": "D",
+    "container_count": 81,
+    "centroid_lat": -34.823086,
+    "centroid_lon": -56.148979,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "MARTES",
+      "JUEVES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "D_DU_RM_CL_119": {
+    "circuit_id": "D_DU_RM_CL_119",
+    "municipality": "D",
+    "container_count": 68,
+    "centroid_lat": -34.814436,
+    "centroid_lon": -56.146328,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "MARTES",
+      "JUEVES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "D_DU_RM_CL_120": {
+    "circuit_id": "D_DU_RM_CL_120",
+    "municipality": "D",
+    "container_count": 88,
+    "centroid_lat": -34.810515,
+    "centroid_lon": -56.159204,
+    "dominant_shift": "afternoon",
+    "collection_days": [
+      "MARTES",
+      "JUEVES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "D_DU_RM_CL_121": {
+    "circuit_id": "D_DU_RM_CL_121",
+    "municipality": "D",
+    "container_count": 21,
+    "centroid_lat": -34.776868,
+    "centroid_lon": -56.136278,
+    "dominant_shift": "afternoon",
+    "collection_days": [
+      "MARTES",
+      "JUEVES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "E_DU_RM_CL_101": {
+    "circuit_id": "E_DU_RM_CL_101",
+    "municipality": "E",
+    "container_count": 109,
+    "centroid_lat": -34.883559,
+    "centroid_lon": -56.144799,
+    "dominant_shift": "night",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "E_DU_RM_CL_102": {
+    "circuit_id": "E_DU_RM_CL_102",
+    "municipality": "E",
+    "container_count": 91,
+    "centroid_lat": -34.882031,
+    "centroid_lon": -56.134497,
+    "dominant_shift": "afternoon",
+    "collection_days": [
+      "MARTES",
+      "JUEVES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "E_DU_RM_CL_103": {
+    "circuit_id": "E_DU_RM_CL_103",
+    "municipality": "E",
+    "container_count": 59,
+    "centroid_lat": -34.875751,
+    "centroid_lon": -56.130017,
+    "dominant_shift": "afternoon",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "E_DU_RM_CL_104": {
+    "circuit_id": "E_DU_RM_CL_104",
+    "municipality": "E",
+    "container_count": 101,
+    "centroid_lat": -34.891473,
+    "centroid_lon": -56.126997,
+    "dominant_shift": "night",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "E_DU_RM_CL_105": {
+    "circuit_id": "E_DU_RM_CL_105",
+    "municipality": "E",
+    "container_count": 115,
+    "centroid_lat": -34.892277,
+    "centroid_lon": -56.114571,
+    "dominant_shift": "night",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "E_DU_RM_CL_106": {
+    "circuit_id": "E_DU_RM_CL_106",
+    "municipality": "E",
+    "container_count": 59,
+    "centroid_lat": -34.885267,
+    "centroid_lon": -56.113948,
+    "dominant_shift": "afternoon",
+    "collection_days": [
+      "MIERCOLES",
+      "VIERNES",
+      "DOMINGO"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "E_DU_RM_CL_107": {
+    "circuit_id": "E_DU_RM_CL_107",
+    "municipality": "E",
+    "container_count": 97,
+    "centroid_lat": -34.878132,
+    "centroid_lon": -56.105848,
+    "dominant_shift": "afternoon",
+    "collection_days": [
+      "MARTES",
+      "JUEVES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "E_DU_RM_CL_108": {
+    "circuit_id": "E_DU_RM_CL_108",
+    "municipality": "E",
+    "container_count": 108,
+    "centroid_lat": -34.891702,
+    "centroid_lon": -56.102883,
+    "dominant_shift": "night",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "E_DU_RM_CL_109": {
+    "circuit_id": "E_DU_RM_CL_109",
+    "municipality": "E",
+    "container_count": 116,
+    "centroid_lat": -34.890752,
+    "centroid_lon": -56.096314,
+    "dominant_shift": "night",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "E_DU_RM_CL_110": {
+    "circuit_id": "E_DU_RM_CL_110",
+    "municipality": "E",
+    "container_count": 101,
+    "centroid_lat": -34.876337,
+    "centroid_lon": -56.09292,
+    "dominant_shift": "night",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "E_DU_RM_CL_111": {
+    "circuit_id": "E_DU_RM_CL_111",
+    "municipality": "E",
+    "container_count": 71,
+    "centroid_lat": -34.873928,
+    "centroid_lon": -56.068451,
+    "dominant_shift": "night",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "E_DU_RM_CL_112": {
+    "circuit_id": "E_DU_RM_CL_112",
+    "municipality": "E",
+    "container_count": 105,
+    "centroid_lat": -34.891206,
+    "centroid_lon": -56.079395,
+    "dominant_shift": "night",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "E_DU_RM_CL_113": {
+    "circuit_id": "E_DU_RM_CL_113",
+    "municipality": "E",
+    "container_count": 90,
+    "centroid_lat": -34.883563,
+    "centroid_lon": -56.068761,
+    "dominant_shift": "night",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "E_DU_RM_CL_114": {
+    "circuit_id": "E_DU_RM_CL_114",
+    "municipality": "E",
+    "container_count": 78,
+    "centroid_lat": -34.892859,
+    "centroid_lon": -56.06551,
+    "dominant_shift": "night",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "E_DU_RM_CL_115": {
+    "circuit_id": "E_DU_RM_CL_115",
+    "municipality": "E",
+    "container_count": 79,
+    "centroid_lat": -34.872347,
+    "centroid_lon": -56.050214,
+    "dominant_shift": "night",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "E_DU_RM_CL_136": {
+    "circuit_id": "E_DU_RM_CL_136",
+    "municipality": "E",
+    "container_count": 40,
+    "centroid_lat": -34.87596,
+    "centroid_lon": -56.117299,
+    "dominant_shift": "afternoon",
+    "collection_days": [
+      "LUNES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "F_DU_RM_CL_101": {
+    "circuit_id": "F_DU_RM_CL_101",
+    "municipality": "F",
+    "container_count": 121,
+    "centroid_lat": -34.866586,
+    "centroid_lon": -56.091299,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "F_DU_RM_CL_102": {
+    "circuit_id": "F_DU_RM_CL_102",
+    "municipality": "F",
+    "container_count": 89,
+    "centroid_lat": -34.867276,
+    "centroid_lon": -56.12043,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "F_DU_RM_CL_103": {
+    "circuit_id": "F_DU_RM_CL_103",
+    "municipality": "F",
+    "container_count": 86,
+    "centroid_lat": -34.865583,
+    "centroid_lon": -56.130704,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "MARTES",
+      "JUEVES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "F_DU_RM_CL_104": {
+    "circuit_id": "F_DU_RM_CL_104",
+    "municipality": "F",
+    "container_count": 83,
+    "centroid_lat": -34.853891,
+    "centroid_lon": -56.137676,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "F_DU_RM_CL_105": {
+    "circuit_id": "F_DU_RM_CL_105",
+    "municipality": "F",
+    "container_count": 99,
+    "centroid_lat": -34.846472,
+    "centroid_lon": -56.146291,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "MARTES",
+      "JUEVES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "F_DU_RM_CL_106": {
+    "circuit_id": "F_DU_RM_CL_106",
+    "municipality": "F",
+    "container_count": 91,
+    "centroid_lat": -34.856598,
+    "centroid_lon": -56.122459,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "MARTES",
+      "JUEVES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "F_DU_RM_CL_107": {
+    "circuit_id": "F_DU_RM_CL_107",
+    "municipality": "F",
+    "container_count": 91,
+    "centroid_lat": -34.85024,
+    "centroid_lon": -56.122855,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "F_DU_RM_CL_108": {
+    "circuit_id": "F_DU_RM_CL_108",
+    "municipality": "F",
+    "container_count": 95,
+    "centroid_lat": -34.843049,
+    "centroid_lon": -56.125578,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "F_DU_RM_CL_109": {
+    "circuit_id": "F_DU_RM_CL_109",
+    "municipality": "F",
+    "container_count": 62,
+    "centroid_lat": -34.833417,
+    "centroid_lon": -56.134673,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "F_DU_RM_CL_110": {
+    "circuit_id": "F_DU_RM_CL_110",
+    "municipality": "F",
+    "container_count": 100,
+    "centroid_lat": -34.836258,
+    "centroid_lon": -56.117677,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "F_DU_RM_CL_111": {
+    "circuit_id": "F_DU_RM_CL_111",
+    "municipality": "F",
+    "container_count": 96,
+    "centroid_lat": -34.825201,
+    "centroid_lon": -56.133229,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "F_DU_RM_CL_112": {
+    "circuit_id": "F_DU_RM_CL_112",
+    "municipality": "F",
+    "container_count": 67,
+    "centroid_lat": -34.813172,
+    "centroid_lon": -56.133472,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "F_DU_RM_CL_113": {
+    "circuit_id": "F_DU_RM_CL_113",
+    "municipality": "F",
+    "container_count": 86,
+    "centroid_lat": -34.827965,
+    "centroid_lon": -56.114277,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "F_DU_RM_CL_114": {
+    "circuit_id": "F_DU_RM_CL_114",
+    "municipality": "F",
+    "container_count": 93,
+    "centroid_lat": -34.823427,
+    "centroid_lon": -56.101653,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "F_DU_RM_CL_115": {
+    "circuit_id": "F_DU_RM_CL_115",
+    "municipality": "F",
+    "container_count": 94,
+    "centroid_lat": -34.802435,
+    "centroid_lon": -56.087841,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "east",
+    "depot": {
+      "id": "depot_felipe_cardoso",
+      "name": "Sitio Disposición Final Felipe Cardoso",
+      "latitude": -34.8347,
+      "longitude": -56.0967,
+      "type": "disposal_site"
+    }
+  },
+  "G_DU_RM_CL_101": {
+    "circuit_id": "G_DU_RM_CL_101",
+    "municipality": "G",
+    "container_count": 75,
+    "centroid_lat": -34.847095,
+    "centroid_lon": -56.200479,
+    "dominant_shift": "night",
+    "collection_days": [
+      "MARTES",
+      "JUEVES",
+      "DOMINGO"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "G_DU_RM_CL_103": {
+    "circuit_id": "G_DU_RM_CL_103",
+    "municipality": "G",
+    "container_count": 105,
+    "centroid_lat": -34.836357,
+    "centroid_lon": -56.21053,
+    "dominant_shift": "night",
+    "collection_days": [
+      "MARTES",
+      "JUEVES",
+      "DOMINGO"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "G_DU_RM_CL_104": {
+    "circuit_id": "G_DU_RM_CL_104",
+    "municipality": "G",
+    "container_count": 83,
+    "centroid_lat": -34.8318,
+    "centroid_lon": -56.205881,
+    "dominant_shift": "night",
+    "collection_days": [
+      "MARTES",
+      "JUEVES",
+      "DOMINGO"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "G_DU_RM_CL_105": {
+    "circuit_id": "G_DU_RM_CL_105",
+    "municipality": "G",
+    "container_count": 92,
+    "centroid_lat": -34.82443,
+    "centroid_lon": -56.205969,
+    "dominant_shift": "night",
+    "collection_days": [
+      "MARTES",
+      "JUEVES",
+      "DOMINGO"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "G_DU_RM_CL_106": {
+    "circuit_id": "G_DU_RM_CL_106",
+    "municipality": "G",
+    "container_count": 82,
+    "centroid_lat": -34.845097,
+    "centroid_lon": -56.213162,
+    "dominant_shift": "night",
+    "collection_days": [
+      "MARTES",
+      "JUEVES",
+      "DOMINGO"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "G_DU_RM_CL_107": {
+    "circuit_id": "G_DU_RM_CL_107",
+    "municipality": "G",
+    "container_count": 92,
+    "centroid_lat": -34.834417,
+    "centroid_lon": -56.233113,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "G_DU_RM_CL_108": {
+    "circuit_id": "G_DU_RM_CL_108",
+    "municipality": "G",
+    "container_count": 99,
+    "centroid_lat": -34.827042,
+    "centroid_lon": -56.227123,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "G_DU_RM_CL_109": {
+    "circuit_id": "G_DU_RM_CL_109",
+    "municipality": "G",
+    "container_count": 100,
+    "centroid_lat": -34.821392,
+    "centroid_lon": -56.224517,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "G_DU_RM_CL_110": {
+    "circuit_id": "G_DU_RM_CL_110",
+    "municipality": "G",
+    "container_count": 82,
+    "centroid_lat": -34.812962,
+    "centroid_lon": -56.22837,
+    "dominant_shift": "afternoon",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "G_DU_RM_CL_111": {
+    "circuit_id": "G_DU_RM_CL_111",
+    "municipality": "G",
+    "container_count": 107,
+    "centroid_lat": -34.803512,
+    "centroid_lon": -56.245022,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "G_DU_RM_CL_112": {
+    "circuit_id": "G_DU_RM_CL_112",
+    "municipality": "G",
+    "container_count": 99,
+    "centroid_lat": -34.799068,
+    "centroid_lon": -56.239507,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "G_DU_RM_CL_113": {
+    "circuit_id": "G_DU_RM_CL_113",
+    "municipality": "G",
+    "container_count": 98,
+    "centroid_lat": -34.802402,
+    "centroid_lon": -56.228444,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "MARTES",
+      "JUEVES"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "G_DU_RM_CL_114": {
+    "circuit_id": "G_DU_RM_CL_114",
+    "municipality": "G",
+    "container_count": 43,
+    "centroid_lat": -34.791997,
+    "centroid_lon": -56.227227,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "G_DU_RM_CL_115": {
+    "circuit_id": "G_DU_RM_CL_115",
+    "municipality": "G",
+    "container_count": 91,
+    "centroid_lat": -34.80929,
+    "centroid_lon": -56.21491,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  },
+  "G_DU_RM_CL_116": {
+    "circuit_id": "G_DU_RM_CL_116",
+    "municipality": "G",
+    "container_count": 103,
+    "centroid_lat": -34.819577,
+    "centroid_lon": -56.20241,
+    "dominant_shift": "morning",
+    "collection_days": [
+      "LUNES",
+      "MIERCOLES",
+      "VIERNES"
+    ],
+    "zone": "west",
+    "depot": {
+      "id": "depot_estacion_transferencia",
+      "name": "Estación de Transferencia (Ruta 102)",
+      "latitude": -34.8128,
+      "longitude": -56.2645,
+      "type": "transfer_station"
+    }
+  }
+}

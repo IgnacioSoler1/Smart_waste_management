@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@drawio/mcp": "^1.2.2"
+  }
+}
