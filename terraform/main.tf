@@ -25,7 +25,7 @@ terraform {
 
 provider "aws" {
   region  = "us-east-1"
-  profile = "personal-smart-recycle"
+  profile = "personal-classify"
   default_tags {
     tags = {
       Project     = var.project_prefix

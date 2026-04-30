@@ -36,6 +36,10 @@ dist/
 # ---- OSRM data (large binary files) ----
 osrm/data/
 
+# ---- paper examples
+paper_examples/*
+paper/*
+
 # ---- Lambda deployment packages ----
 *.zip
 

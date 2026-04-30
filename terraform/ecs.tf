@@ -53,6 +53,9 @@ resource "null_resource" "osrm_image_push" {
   }
 
   provisioner "local-exec" {
+    environment = {
+      AWS_PROFILE = "personal-classify"
+    }
     command = <<-EOT
       set -e
       REGION="${local.region}"
