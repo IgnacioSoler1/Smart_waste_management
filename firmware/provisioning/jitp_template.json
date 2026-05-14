@@ -1,0 +1,42 @@
+{
+  "templateBody": {
+    "Parameters": {
+      "AWS::IoT::Certificate::CommonName": {
+        "Type": "String"
+      },
+      "AWS::IoT::Certificate::SerialNumber": {
+        "Type": "String"
+      },
+      "AWS::IoT::Certificate::Id": {
+        "Type": "String"
+      }
+    },
+    "Resources": {
+      "thing": {
+        "Type": "AWS::IoT::Thing",
+        "Properties": {
+          "ThingName": {
+            "Ref": "AWS::IoT::Certificate::CommonName"
+          },
+          "ThingTypeName": "smartwaste-dev-WasteContainer",
+          "AttributePayload": {}
+        }
+      },
+      "certificate": {
+        "Type": "AWS::IoT::Certificate",
+        "Properties": {
+          "CertificateId": {
+            "Ref": "AWS::IoT::Certificate::Id"
+          },
+          "Status": "ACTIVE"
+        }
+      },
+      "policy": {
+        "Type": "AWS::IoT::Policy",
+        "Properties": {
+          "PolicyName": "smartwaste-dev-sensor-policy"
+        }
+      }
+    }
+  }
+}

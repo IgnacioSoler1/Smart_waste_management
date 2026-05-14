@@ -1,0 +1,152 @@
+menu "SmartWaste Sensor Configuration"
+
+    menu "Container"
+        config SMARTWASTE_CONTAINER_ID
+            string "Container ID (gid from Intendencia data)"
+            default "000000"
+            help
+                Unique identifier for this container. Matches the gid field
+                from the Intendencia de Montevideo dataset.
+
+        config SMARTWASTE_CONTAINER_HEIGHT_MM
+            int "Container height in mm (empty distance from sensor to bottom)"
+            default 1200
+            range 500 2500
+            help
+                Distance in mm from the sensor to the bottom of the container
+                when it is completely empty. Used to calculate fill percentage.
+
+        config SMARTWASTE_LATITUDE
+            string "Latitude (decimal degrees, e.g. -34.835566)"
+            default "-34.835566"
+
+        config SMARTWASTE_LONGITUDE
+            string "Longitude (decimal degrees, e.g. -56.243533)"
+            default "-56.243533"
+    endmenu
+
+    menu "Sensors"
+        config SMARTWASTE_JSN_SR04T_UART_NUM
+            int "JSN-SR04T UART number (1 or 2)"
+            default 1
+            range 1 2
+
+        config SMARTWASTE_JSN_SR04T_TX_PIN
+            int "JSN-SR04T UART TX GPIO pin"
+            default 17
+
+        config SMARTWASTE_JSN_SR04T_RX_PIN
+            int "JSN-SR04T UART RX GPIO pin"
+            default 16
+
+        config SMARTWASTE_VL53L1X_SDA_PIN
+            int "VL53L1X I2C SDA GPIO pin"
+            default 21
+
+        config SMARTWASTE_VL53L1X_SCL_PIN
+            int "VL53L1X I2C SCL GPIO pin"
+            default 22
+
+        config SMARTWASTE_VL53L1X_I2C_NUM
+            int "VL53L1X I2C port number (0 or 1)"
+            default 0
+            range 0 1
+
+        config SMARTWASTE_SENSOR_READINGS_COUNT
+            int "Number of readings per measurement cycle (for median filter)"
+            default 5
+            range 3 15
+
+        config SMARTWASTE_JSN_SR04T_MOUNT_ANGLE_DEG
+            int "JSN-SR04T mount angle in degrees from vertical (0=vertical)"
+            default 0
+            range 0 45
+
+        config SMARTWASTE_VL53L1X_MOUNT_ANGLE_DEG
+            int "VL53L1X mount angle in degrees from vertical (0=vertical)"
+            default 0
+            range 0 45
+    endmenu
+
+    menu "SIM800L"
+        config SMARTWASTE_SIM800L_UART_NUM
+            int "SIM800L UART number (1 or 2)"
+            default 2
+            range 1 2
+
+        config SMARTWASTE_SIM800L_TX_PIN
+            int "SIM800L UART TX GPIO pin"
+            default 4
+
+        config SMARTWASTE_SIM800L_RX_PIN
+            int "SIM800L UART RX GPIO pin"
+            default 5
+
+        config SMARTWASTE_SIM800L_PWRKEY_PIN
+            int "SIM800L PWRKEY GPIO pin"
+            default 23
+
+        config SMARTWASTE_SIM800L_BAUDRATE
+            int "SIM800L UART baudrate"
+            default 115200
+
+        config SMARTWASTE_APN
+            string "Cellular APN"
+            default "antel.lte"
+            help
+                APN for the SIM card provider. Default is Antel Uruguay.
+    endmenu
+
+    menu "MQTT"
+        config SMARTWASTE_MQTT_BROKER_URI
+            string "MQTT Broker URI (AWS IoT Core endpoint)"
+            default "mqtts://xxxx.iot.us-east-1.amazonaws.com"
+            help
+                The ATS endpoint for your AWS IoT Core. Find it with:
+                aws iot describe-endpoint --endpoint-type iot:Data-ATS
+
+        config SMARTWASTE_MQTT_TOPIC_PREFIX
+            string "MQTT topic prefix"
+            default "smartwaste-dev"
+
+        config SMARTWASTE_MQTT_QOS
+            int "MQTT QoS level (0 or 1)"
+            default 1
+            range 0 1
+    endmenu
+
+    menu "Power Management"
+        config SMARTWASTE_DEEP_SLEEP_SECONDS
+            int "Deep sleep interval in seconds"
+            default 900
+            range 60 3600
+            help
+                Time in seconds between measurement cycles. Default 900 = 15 minutes.
+
+        config SMARTWASTE_MAX_AWAKE_SECONDS
+            int "Maximum awake time in seconds (safety timeout)"
+            default 120
+            range 30 300
+            help
+                If the device cannot complete its cycle in this time, it will
+                force deep sleep to preserve battery.
+    endmenu
+
+    menu "Battery"
+        config SMARTWASTE_BATTERY_ADC_CHANNEL
+            int "Battery voltage ADC channel (ADC1, 0-7)"
+            default 6
+            range 0 7
+            help
+                ADC1 channel connected to the battery voltage divider.
+                Channel 6 = GPIO34.
+
+        config SMARTWASTE_BATTERY_DIVIDER_RATIO
+            int "Battery voltage divider ratio x100 (e.g. 200 for 2:1)"
+            default 200
+            help
+                Voltage divider ratio multiplied by 100. For a 2:1 divider
+                (100k/100k), use 200.
+    endmenu
+
+endmenu

@@ -60,5 +60,18 @@ paper/*
 *.log
 npm-debug.log*
 
+# ---- ESP32 Firmware ----
+firmware/build/
+firmware/sdkconfig
+firmware/sdkconfig.old
+firmware/managed_components/
+firmware/dependencies.lock
+firmware/ca-keys/
+firmware/device-certs/
+firmware/certs/*.pem
+firmware/certs/*.key
+firmware/provisioning/ca-keys/
+*.bin
+
 # ---- Claude Code agent memory (contains AWS account IDs) ----
 .claude/agent-memory/

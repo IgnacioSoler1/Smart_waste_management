@@ -98,6 +98,66 @@ resource "aws_iot_policy" "sensor_policy" {
   }
 }
 
+# ── JITP (Just In Time Provisioning) ────────────────────
+# IAM role que IoT Core asume para crear Things y activar
+# certificados durante el provisioning automático de
+# dispositivos ESP32.
+#
+# La CA se registra manualmente con:
+#   cd firmware/provisioning && ./register_ca.sh
+#
+# El template JITP (firmware/provisioning/jitp_template.json)
+# se pasa al registrar la CA. Define qué Thing, Policy y
+# Certificate se crean automáticamente cuando un nuevo
+# dispositivo se conecta por primera vez.
+
+resource "aws_iam_role" "iot_jitp_role" {
+  name = "${local.name_prefix}-iot-jitp-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "iot.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+
+  tags = {
+    Name = "${local.name_prefix}-iot-jitp-role"
+  }
+}
+
+resource "aws_iam_role_policy" "iot_jitp_policy" {
+  name = "${local.name_prefix}-iot-jitp-policy"
+  role = aws_iam_role.iot_jitp_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AllowJITPCreateResources"
+        Effect = "Allow"
+        Action = [
+          "iot:CreateThing",
+          "iot:DescribeThing",
+          "iot:UpdateThing",
+          "iot:AddThingToThingGroup",
+          "iot:UpdateCertificate",
+          "iot:AttachPolicy",
+          "iot:AttachThingPrincipal",
+          "iot:DescribeCertificate",
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 # ── Endpoint IoT (dato de referencia) ────────────────────
 # Expone el endpoint ATS (Amazon Trust Services) de IoT Core
 # para esta cuenta/región. Se usa en los outputs y en el

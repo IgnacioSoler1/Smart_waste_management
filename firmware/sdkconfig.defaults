@@ -1,0 +1,53 @@
+# SmartWaste MVD — sdkconfig defaults
+# Estas opciones se aplican automáticamente en el primer build.
+# Para modificar después: idf.py menuconfig
+
+# ── Target ──────────────────────────────────────────────
+CONFIG_IDF_TARGET="esp32"
+
+# ── Deep Sleep ──────────────────────────────────────────
+# Habilitar ULP (Ultra Low Power) coprocessor no es necesario,
+# solo usamos timer wakeup.
+CONFIG_ESP_SLEEP_GPIO_RESET_WORKAROUND=y
+
+# ── UART ────────────────────────────────────────────────
+# UART1 para JSN-SR04T, UART2 para SIM800L
+CONFIG_ESP_CONSOLE_UART_DEFAULT=y
+
+# ── I2C ─────────────────────────────────────────────────
+# I2C0 para VL53L1X
+# (configuración de pines via Kconfig.projbuild)
+
+# ── mbedTLS ─────────────────────────────────────────────
+# TLS 1.2 para MQTT con AWS IoT Core
+CONFIG_MBEDTLS_TLS_ENABLED=y
+CONFIG_MBEDTLS_SSL_MAX_CONTENT_LEN=6144
+CONFIG_MBEDTLS_ASYMMETRIC_CONTENT_LEN=y
+CONFIG_MBEDTLS_SSL_IN_CONTENT_LEN=6144
+CONFIG_MBEDTLS_SSL_OUT_CONTENT_LEN=2048
+
+# ── LWIP / PPP ──────────────────────────────────────────
+# PPP para conexión de datos via SIM800L
+CONFIG_LWIP_PPP_SUPPORT=y
+CONFIG_LWIP_PPP_PAP_SUPPORT=y
+CONFIG_LWIP_PPP_CHAP_SUPPORT=y
+
+# ── SNTP ────────────────────────────────────────────────
+CONFIG_LWIP_SNTP_MAX_SERVERS=2
+
+# ── NVS ─────────────────────────────────────────────────
+# NVS encriptado no es necesario en esta fase, pero
+# la partición NVS es grande para almacenar certificados TLS.
+CONFIG_NVS_ENCRYPTION=n
+
+# ── Watchdog ────────────────────────────────────────────
+# Timeout generoso porque la conexión GPRS puede tardar
+CONFIG_ESP_TASK_WDT_TIMEOUT_S=60
+
+# ── Log level ───────────────────────────────────────────
+CONFIG_LOG_DEFAULT_LEVEL_INFO=y
+CONFIG_LOG_DEFAULT_LEVEL=3
+
+# ── Partitions ──────────────────────────────────────────
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"

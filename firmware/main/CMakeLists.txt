@@ -1,0 +1,28 @@
+idf_component_register(
+    SRCS
+        "main.c"
+        "sensors/jsn_sr04t.c"
+        "sensors/vl53l1x.c"
+        "measurement/fill_calculator.c"
+        "measurement/outlier_filter.c"
+        "connectivity/sim800l.c"
+        "connectivity/mqtt_client.c"
+        "connectivity/ntp_sync.c"
+        "power/sleep_manager.c"
+    INCLUDE_DIRS
+        "."
+        "sensors"
+        "measurement"
+        "connectivity"
+        "power"
+    REQUIRES
+        driver
+        esp_adc
+        esp_event
+        esp_netif
+        esp_timer
+        mqtt
+        nvs_flash
+        mbedtls
+        lwip
+)
