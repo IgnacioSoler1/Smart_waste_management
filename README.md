@@ -1,217 +1,224 @@
 # SmartWaste MVD
 
-**Optimizacion dinamica de rutas de recoleccion de residuos en Montevideo, Uruguay.**
+**Dynamic route optimization for waste collection in Montevideo, Uruguay.**
 
-Un sistema end-to-end que simula sensores IoT en ~13.000 contenedores de basura, determina en tiempo real cuales necesitan ser vaciados, y calcula la ruta optima para cada camion recolector — reduciendo kilometros recorridos, combustible consumido y contenedores desbordados.
-
----
-
-## El problema
-
-Montevideo genera aproximadamente **1.200 toneladas diarias** de residuos domiciliarios, distribuidos en ~13.000 contenedores organizados en **117 circuitos de recoleccion**. Hoy, los camiones siguen **rutas fijas**: recorren todos los contenedores de su circuito sin importar si estan llenos, a medio llenar, o practicamente vacios.
-
-Esto genera:
-- **Kilometros innecesarios** — camiones que pasan por contenedores que no necesitan ser vaciados
-- **Contenedores desbordados** — los que se llenan mas rapido no reciben atencion prioritaria
-- **Consumo excesivo de combustible** y desgaste de flota
-- **Imposibilidad de planificar** en base a datos reales de llenado
-
-## La solucion
-
-SmartWaste MVD convierte las rutas estaticas en **rutas dinamicas basadas en datos**. El sistema:
-
-1. **Simula sensores IoT** en cada contenedor, publicando niveles de llenado via MQTT cada 60 segundos
-2. **Prioriza contenedores** — identifica cuales necesitan recoleccion urgente (>80%), cuales pueden esperar, y cuales se pueden omitir
-3. **Calcula la ruta optima** para cada camion cada 15 minutos, considerando distancias reales por calles, capacidad del camion, y ubicacion de los sitios de disposicion
-4. **Notifica al conductor en tiempo real** via WebSocket con la ruta actualizada directamente en su app
-
-El resultado: los camiones solo visitan los contenedores que realmente necesitan ser vaciados, en el orden mas eficiente posible.
+An end-to-end system that monitors fill levels in ~13,000 waste containers (via IoT sensors or simulation), determines in real time which ones need to be emptied, and calculates the optimal pickup route for each truck — reducing kilometers driven, fuel burned, and overflowing containers.
 
 ---
 
-## Resultados
+## The problem
 
-### Como medimos
+Montevideo generates approximately **1,200 tons of household waste per day**, distributed across ~13,000 containers organized into **117 collection circuits**. Today, trucks follow **fixed routes**: they visit every container in their circuit regardless of whether it's full, half-full, or nearly empty.
 
-No tenemos acceso a datos reales de cuanto tiempo o distancia recorre hoy cada camion. Lo que si podemos hacer es **simular la ruta actual y compararla con la ruta optimizada**, usando las mismas herramientas de ruteo (OSRM) y los mismos datos de calles.
+This leads to:
+- **Unnecessary kilometers** — trucks passing by containers that don't need to be emptied
+- **Overflowing containers** — the ones that fill up faster don't receive priority attention
+- **Excessive fuel consumption** and fleet wear
+- **No data-driven planning** based on actual fill levels
 
-Para cada circuito, generamos dos rutas:
+## The solution
 
-- **Ruta baseline (actual)**: visita **todos** los contenedores del circuito en orden secuencial — es decir, uno tras otro segun estan numerados en el recorrido original. Esta es una aproximacion razonable de como operan hoy los camiones: siguen un recorrido fijo sin importar el nivel de llenado.
-- **Ruta optimizada**: visita **solo los contenedores que necesitan recoleccion**, en el orden que minimiza la distancia total recorrida. Si un contenedor esta por debajo del 30% de llenado, se omite. El solver (NVIDIA cuOpt) decide el orden optimo y, si es necesario, divide el trabajo entre multiples camiones respetando la capacidad de cada uno.
+SmartWaste MVD turns static routes into **dynamic, data-driven routes**. The system:
 
-Ambas rutas se calculan sobre el **mismo grafo vial** (OpenStreetMap Uruguay via OSRM), con distancias y tiempos reales de calle a calle. La diferencia entre ambas es el ahorro que genera la optimizacion.
+1. **Monitors fill levels** in each container via IoT sensors (or simulation), publishing readings via MQTT
+2. **Prioritizes containers** — identifies which need urgent collection (>80%), which can wait, and which can be skipped
+3. **Calculates the optimal route** for each truck every 15 minutes, considering real street distances, truck capacity, and disposal site locations
+4. **Notifies the driver in real time** via WebSocket with the updated route directly in their app
 
-### Numeros reales del sistema
-
-Sobre **66 circuitos** optimizados en una ejecucion tipica:
-
-| Metrica | Ruta baseline | Ruta optimizada | Mejora |
-|---------|:------------:|:---------------:|:------:|
-| **Distancia total** | 6.055 km | 3.424 km | **-43%** |
-| **Tiempo total** | 176 horas | 88 horas | **-50%** |
-| **Paradas** | 4.190 | 3.828 | 362 contenedores omitidos |
-
-Desglose por turno:
-
-| Turno | Circuitos | Mejora promedio en distancia | Mejora promedio en tiempo |
-|-------|:---------:|:----------------------------:|:------------------------:|
-| Manana | 29 | **45%** | 49% |
-| Tarde | 11 | **49%** | 53% |
-| Noche | 26 | **37%** | 40% |
-
-Los mejores circuitos alcanzan reducciones de hasta **74% en distancia** y **71% en tiempo**. La mediana de mejora se ubica en **~46% en distancia** y **~50% en tiempo**.
-
-### Que significa esto en la practica
-
-Si estos numeros se trasladan a operacion real, significaria:
-- **~2.600 km menos recorridos por dia** solo en los 66 circuitos medidos
-- **~88 horas menos de operacion** de camiones por dia
-- Contenedores casi vacios que se dejan de visitar, liberando tiempo para los que realmente necesitan recoleccion
-- Menor consumo de combustible y desgaste de flota
-
-> **Nota importante**: estos resultados comparan contra una baseline simulada (ruta secuencial fija), no contra datos reales de GPS de los camiones. Los numeros reales pueden variar — pero la magnitud del ahorro potencial es clara.
+The result: trucks only visit the containers that actually need to be emptied, in the most efficient order possible.
 
 ---
 
-## Como funciona
+## Results
 
-### Flujo general
+### How we measure
+
+We don't have access to real data on how far or how long each truck travels today. What we can do is **simulate the current route and compare it with the optimized route**, using the same routing tools (OSRM) and the same street data.
+
+For each circuit, we generate two routes:
+
+- **Baseline route (current)**: visits **all** containers in the circuit in sequential order — one after another as numbered in the original route. This is a reasonable approximation of how trucks operate today: they follow a fixed route regardless of fill level.
+- **Optimized route**: visits **only the containers that need collection**, in the order that minimizes total distance traveled. Containers below 30% fill level are skipped. The solver (NVIDIA cuOpt) determines the optimal order and, if necessary, splits the work across multiple trucks while respecting capacity constraints.
+
+Both routes are calculated on the **same road graph** (OpenStreetMap Uruguay via OSRM), with real street-to-street distances and travel times. The difference between the two is the savings generated by optimization.
+
+### System benchmarks
+
+Across **66 circuits** optimized in a typical run:
+
+| Metric | Baseline route | Optimized route | Improvement |
+|--------|:-------------:|:---------------:|:-----------:|
+| **Total distance** | 6,055 km | 3,424 km | **-43%** |
+| **Total time** | 176 hours | 88 hours | **-50%** |
+| **Stops** | 4,190 | 3,828 | 362 containers skipped |
+
+Breakdown by shift:
+
+| Shift | Circuits | Avg. distance improvement | Avg. time improvement |
+|-------|:--------:|:-------------------------:|:---------------------:|
+| Morning | 29 | **45%** | 49% |
+| Afternoon | 11 | **49%** | 53% |
+| Night | 26 | **37%** | 40% |
+
+The best circuits achieve reductions of up to **74% in distance** and **71% in time**. The median improvement is **~46% in distance** and **~50% in time**.
+
+### What this means in practice
+
+If these numbers translate to real operations, it would mean:
+- **~2,600 fewer km driven per day** across just the 66 measured circuits
+- **~88 fewer hours of truck operation** per day
+- Near-empty containers skipped, freeing time for the ones that truly need collection
+- Lower fuel consumption and fleet wear
+
+> **Important note**: these results compare against a simulated baseline (fixed sequential route), not against real truck GPS data. Actual numbers may vary — but the magnitude of potential savings is clear.
+
+---
+
+## How it works
+
+### General flow
 
 ```
-Sensores IoT (simulados)
-    | MQTT cada 60s
+IoT Sensors (real or simulated)
+    | MQTT every 15 min (real) / 60s (simulated)
     v
-AWS IoT Core ---- fanout ---+-- SQS -> Lambda -> DynamoDB (estado operativo)
-                             +-- Kinesis -> S3 (data lake historico)
+AWS IoT Core ---- fanout ---+-- SQS -> Lambda -> DynamoDB (operational state)
+                             +-- Kinesis -> S3 (historical data lake)
 
-EventBridge (cada 15 min) -> Lambda route-optimizer
-    |-- Lee niveles de llenado desde DynamoDB
-    |-- Calcula matriz de distancias reales con OSRM
-    |-- Resuelve el problema de ruteo vehicular con NVIDIA cuOpt
-    +-- Envia la ruta optimizada al conductor via WebSocket
+EventBridge (every 15 min) -> Lambda route-optimizer
+    |-- Reads fill levels from DynamoDB
+    |-- Computes real distance matrix with OSRM
+    |-- Solves the vehicle routing problem with NVIDIA cuOpt
+    +-- Pushes optimized route to driver via WebSocket
 ```
 
-> Para el detalle completo de la arquitectura, ver [`docs/architecture.md`](docs/architecture.md).
+> For the full architecture details, see [`docs/architecture.md`](docs/architecture.md).
 
-### Optimizacion de rutas: el nucleo del sistema
+### Route optimization: the core of the system
 
-El problema de asignar contenedores a camiones y definir el orden optimo de visita es un **Vehicle Routing Problem con capacidad (CVRP)** — un problema de optimizacion combinatoria NP-hard. SmartWaste lo resuelve en dos pasos:
+The problem of assigning containers to trucks and defining the optimal visit order is a **Capacitated Vehicle Routing Problem (CVRP)** — an NP-hard combinatorial optimization problem. SmartWaste solves it in two steps:
 
-**1. Matriz de distancias reales — OSRM**
+**1. Real distance matrix — OSRM**
 
-[OSRM](http://project-osrm.org/) (Open Source Routing Machine) es un motor de ruteo vehicular de alta performance que usa datos de OpenStreetMap. Lo desplegamos self-hosted en AWS (ECS Fargate) con datos del mapa vial de Uruguay y un perfil configurado para camiones recolectores. Esto nos permite calcular la distancia y tiempo real de viaje entre cualquier par de contenedores en **menos de 50ms**, sin depender de APIs externas, sin limites de requests, y sin costo por consulta.
+[OSRM](http://project-osrm.org/) (Open Source Routing Machine) is a high-performance vehicle routing engine that uses OpenStreetMap data. We deploy it self-hosted on AWS (ECS Fargate) with Uruguay road data and a profile configured for waste collection trucks. This lets us compute the real travel distance and time between any pair of containers in **under 50ms**, without relying on external APIs, without request limits, and at no per-query cost.
 
-**2. Solver de ruteo vehicular — NVIDIA cuOpt**
+**2. Vehicle routing solver — NVIDIA cuOpt**
 
-[NVIDIA cuOpt](https://developer.nvidia.com/cuopt-logistics-optimization) es un solver de optimizacion de rutas acelerado por GPU que resuelve problemas VRP complejos en segundos. Recibe la matriz de distancias, la ubicacion de cada contenedor que necesita recoleccion, la capacidad de cada camion, y la ubicacion de los sitios de disposicion final — y devuelve la asignacion optima de contenedores a camiones y el orden de visita que minimiza la distancia total.
+[NVIDIA cuOpt](https://developer.nvidia.com/cuopt-logistics-optimization) is a GPU-accelerated route optimization solver that solves complex VRP problems in seconds. It receives the distance matrix, the location of each container that needs collection, each truck's capacity, and the disposal site locations — and returns the optimal assignment of containers to trucks and the visit order that minimizes total distance.
 
-Como fallback para desarrollo y testing, el sistema tambien puede usar [Google OR-Tools](https://developers.google.com/optimization), un solver CPU que resuelve el mismo problema con mayor tiempo de ejecucion.
+As a fallback for development and testing, the system can also use [Google OR-Tools](https://developers.google.com/optimization), a CPU-based solver that solves the same problem with longer execution time.
 
-### Pipeline de datos y analytics
+### Data pipeline and analytics
 
-Cada lectura de sensor se almacena en un **data lake en S3** siguiendo una arquitectura **Bronze -> Silver -> Gold**:
+Every sensor reading is stored in a **data lake on S3** following a **Bronze -> Silver -> Gold** architecture:
 
-- **Bronze**: datos crudos tal como llegan de los sensores (JSON comprimido)
-- **Silver**: datos limpios y estructurados (Parquet, particionados por fecha)
-- **Gold**: metricas pre-calculadas listas para consumo (JSON)
+- **Bronze**: raw data as it arrives from sensors (compressed JSON)
+- **Silver**: clean, structured data (Parquet, partitioned by date)
+- **Gold**: pre-computed metrics ready for consumption (JSON)
 
-Un job de AWS Glue procesa diariamente los datos para generar analytics: patrones de llenado por hora, heatmaps de la ciudad, tendencias por circuito, y metricas de eficiencia de rutas. Estas metricas son las que alimentan los dashboards y permiten medir los resultados de la optimizacion.
-
----
-
-## El producto final
-
-### Driver App — App para conductores
-
-Una PWA (Progressive Web App) que el conductor instala en su celular. Muestra el mapa con la ruta optimizada en tiempo real, la lista de paradas ordenadas con nivel de llenado de cada contenedor, y se actualiza automaticamente cuando el sistema recalcula la ruta.
-
-- Mapa interactivo con la geometria real de la ruta sobre las calles
-- Contenedores coloreados por urgencia (verde < 40%, amarillo 40-70%, rojo > 70%)
-- Accion de "Vaciar contenedor" que actualiza el estado en tiempo real
-- Funciona offline gracias al service worker
-
-### Dashboard de operaciones
-
-Un panel de control para el equipo de operaciones que permite monitorear todo el sistema:
-
-- **Vista de mapa**: los ~13.000 contenedores geolocalizados, filtrables por circuito y nivel de llenado
-- **Vista de circuito**: rutas multi-camion con visualizacion de la ruta sobre el mapa
-- **KPIs en tiempo real**: distribucion de llenado, contenedores criticos, estadisticas por turno (manana, tarde, noche)
-- **Analytics**: heatmaps de llenado, patrones horarios, tendencias por circuito, y metricas de eficiencia de rutas optimizadas vs. rutas base
+An AWS Glue job processes data daily to generate analytics: hourly fill patterns, city heatmaps, circuit trends, and route efficiency metrics. These metrics feed the dashboards and allow measuring the impact of optimization.
 
 ---
 
-## Stack tecnologico
+## The product
 
-| Componente | Tecnologia | Por que |
-|-----------|-----------|---------|
-| **Infraestructura** | AWS (Terraform IaC) | 40+ recursos gestionados como codigo |
-| **Ingesta IoT** | AWS IoT Core + MQTT | Protocolo estandar para IoT, escala a millones de mensajes |
-| **Procesamiento** | AWS Lambda + SQS | Serverless, escala automaticamente con la carga |
-| **Base operativa** | DynamoDB | Baja latencia, on-demand, ideal para estado de contenedores |
-| **Data lake** | S3 + Kinesis Firehose + Glue | Pipeline Bronze->Silver->Gold para analytics historico |
-| **Ruteo vehicular** | OSRM (ECS Fargate) | Distancias reales por calles, self-hosted, sin costo por query |
-| **Optimizacion VRP** | NVIDIA cuOpt + OR-Tools fallback | Solver GPU para CVRP en segundos |
-| **Comunicacion real-time** | API Gateway WebSocket | Push de rutas al conductor sin polling |
-| **Frontends** | React 18 + TypeScript + Leaflet | PWA instalable, mapas interactivos |
+### Driver App
 
----
+A PWA (Progressive Web App) that the driver installs on their phone. It shows the map with the optimized route in real time, an ordered list of stops with each container's fill level, and updates automatically when the system recalculates the route.
 
-## Datos
+- Interactive map with real route geometry over streets
+- Containers colored by urgency (green < 40%, yellow 40-70%, red > 70%)
+- "Empty container" action that updates state in real time
+- Works offline via service worker
 
-Las ubicaciones de los contenedores provienen de los **datos abiertos de la Intendencia de Montevideo** ([catalogodatos.gub.uy](https://catalogodatos.gub.uy/)). Las coordenadas originales en SIRGAS2000 UTM 21S se convierten a WGS84 para uso en mapas y ruteo.
+### Operations Dashboard
 
-Los circuitos de recoleccion, turnos (manana/tarde/noche), y zonas (este/oeste) tambien provienen de datos oficiales de la Intendencia.
+A control panel for the operations team to monitor the entire system:
+
+- **Map view**: ~13,000 geolocated containers, filterable by circuit and fill level
+- **Circuit view**: multi-truck routes with route visualization on the map
+- **Real-time KPIs**: fill level distribution, critical containers, statistics by shift (morning, afternoon, night)
+- **Analytics**: fill heatmaps, hourly patterns, circuit trends, and efficiency metrics for optimized vs. baseline routes
 
 ---
 
-## Estructura del proyecto
+## Tech stack
+
+| Component | Technology | Why |
+|-----------|-----------|-----|
+| **Infrastructure** | AWS (Terraform IaC) | 40+ resources managed as code |
+| **IoT ingestion** | AWS IoT Core + MQTT | Standard IoT protocol, scales to millions of messages |
+| **Processing** | AWS Lambda + SQS | Serverless, auto-scales with load |
+| **Operational DB** | DynamoDB | Low latency, on-demand, ideal for container state |
+| **Data lake** | S3 + Kinesis Firehose + Glue | Bronze->Silver->Gold pipeline for historical analytics |
+| **Vehicle routing** | OSRM (ECS Fargate) | Real street distances, self-hosted, no per-query cost |
+| **VRP optimization** | NVIDIA cuOpt + OR-Tools fallback | GPU solver for CVRP in seconds |
+| **Real-time comms** | API Gateway WebSocket | Push routes to drivers without polling |
+| **Frontends** | React 18 + TypeScript + Leaflet | Installable PWA, interactive maps |
+| **Sensor firmware** | ESP-IDF (C) on ESP32 | Deep sleep, GPRS via SIM800L, MQTT over TLS |
+
+---
+
+## Data
+
+Container locations come from the **Montevideo city government open data** ([catalogodatos.gub.uy](https://catalogodatos.gub.uy/)). Original coordinates in SIRGAS2000 UTM 21S are converted to WGS84 for use in maps and routing.
+
+Collection circuits, shifts (morning/afternoon/night), and zones (east/west) also come from official city government data.
+
+---
+
+## Project structure
 
 ```
 smartwaste-mvd/
-├── terraform/                # Infraestructura AWS completa (IaC)
-├── data/                     # ETL de datos abiertos, seed de base de datos
+├── terraform/                # Full AWS infrastructure (IaC)
+├── data/                     # Open data ETL, database seeding
 ├── lambdas/
-│   ├── sensor-simulator/     # Simulador IoT (publica MQTT via IoT Core)
-│   ├── process-sensor-reading/  # Procesamiento batch de lecturas
-│   ├── route-optimizer/      # Nucleo: OSRM + cuOpt + notificacion WebSocket
-│   ├── glue-analytics/       # ETL diario Bronze→Silver→Gold
-│   ├── api/                  # REST API para dashboards
-│   └── websocket-*/          # Handlers WebSocket (connect/disconnect/message)
-├── osrm/                     # Dockerfile + perfil de camion + datos Uruguay
-├── frontend-driver/          # App del conductor (React PWA)
-├── frontend-dashboard/       # Dashboard de operaciones (React + Recharts)
-└── docs/                     # Documentacion tecnica detallada
+│   ├── sensor-simulator/     # IoT simulator (publishes MQTT via IoT Core)
+│   ├── process-sensor-reading/  # Batch processing of sensor readings
+│   ├── route-optimizer/      # Core: OSRM + cuOpt + WebSocket notification
+│   ├── glue-analytics/       # Daily ETL Bronze→Silver→Gold
+│   ├── api/                  # REST API for dashboards
+│   └── websocket-*/          # WebSocket handlers (connect/disconnect/message)
+├── firmware/                 # ESP32 sensor firmware (ESP-IDF)
+│   ├── main/                 # Source code (sensors, connectivity, power mgmt)
+│   ├── provisioning/         # JITP scripts for AWS IoT Core auto-provisioning
+│   └── docs/                 # Hardware setup, power budget
+├── osrm/                     # Dockerfile + truck profile + Uruguay data
+├── frontend-driver/          # Driver app (React PWA)
+├── frontend-dashboard/       # Operations dashboard (React + Recharts)
+└── docs/                     # Detailed technical documentation
 ```
 
 ---
 
-## Documentacion
+## Documentation
 
-| Documento | Que cubre |
-|-----------|-----------|
-| [`docs/architecture.md`](docs/architecture.md) | Arquitectura completa, flujos end-to-end, decisiones de diseno |
-| [`docs/datalake.md`](docs/datalake.md) | Pipeline de datos Bronze->Silver->Gold, Glue ETL |
-| [`docs/osrm.md`](docs/osrm.md) | OSRM self-hosted, configuracion del perfil de camion |
-| [`docs/cuopt-implementation.md`](docs/cuopt-implementation.md) | NVIDIA cuOpt, modelado VRP, fallback OR-Tools |
-
----
-
-## Limitaciones y aclaraciones
-
-Este es un sistema de **simulacion y prototipo**. Los sensores IoT son simulados (no hay hardware real conectado), y los resultados comparan contra una ruta baseline simulada, no contra datos GPS reales de los camiones.
-
-- **Sensores simulados**: los niveles de llenado se generan con un modelo que reproduce curvas realistas (hora del dia, dia de la semana, densidad de zona). Cuando se instalen sensores reales, publicarian al mismo topic MQTT y el resto del pipeline no cambia.
-- **Sin GPS real de camiones**: las posiciones de los camiones son simuladas. En produccion, dispositivos OBD-II publicarian a IoT Core.
-- **Sin trafico en tiempo real**: OSRM usa perfiles de velocidad estaticos basados en OpenStreetMap.
-
-La arquitectura esta disenada para que la transicion de simulacion a produccion sea transparente: los sensores reales publicarian al mismo broker MQTT, y el pipeline downstream no requiere cambios.
+| Document | Covers |
+|----------|--------|
+| [`docs/architecture.md`](docs/architecture.md) | Full architecture, end-to-end flows, design decisions |
+| [`docs/datalake.md`](docs/datalake.md) | Data pipeline Bronze->Silver->Gold, Glue ETL |
+| [`docs/osrm.md`](docs/osrm.md) | Self-hosted OSRM, truck profile configuration |
+| [`docs/cuopt-implementation.md`](docs/cuopt-implementation.md) | NVIDIA cuOpt, VRP modeling, OR-Tools fallback |
+| [`firmware/README.md`](firmware/README.md) | ESP32 firmware: build, flash, configure, deploy devices |
 
 ---
 
-## Contexto
+## Limitations and clarifications
 
-Montevideo ya tiene la infraestructura de contenedores. Lo que falta es la inteligencia para usarla mejor.
+This system supports both **real IoT sensors** and **simulation**. The sensor simulator generates realistic fill curves for development and testing; real ESP32 devices publish to the same MQTT topics and the downstream pipeline works identically with either source.
 
-SmartWaste MVD es un sistema completo que demuestra como la optimizacion de rutas basada en datos puede transformar la recoleccion de residuos urbana — desde la ingesta de datos IoT hasta la app en la mano del conductor, pasando por un pipeline de analytics que permite medir y mejorar continuamente los resultados.
+- **Simulation mode**: fill levels are generated with a model that reproduces realistic curves (time of day, day of week, zone density). Useful for development, testing, and demos.
+- **Real sensor mode**: ESP32 + SIM800L devices with ultrasonic and ToF sensors measure actual fill levels and publish via GPRS to AWS IoT Core. See [`firmware/`](firmware/) for the full firmware and provisioning guide.
+- **No real truck GPS**: truck positions are simulated. In production, OBD-II devices would publish to IoT Core.
+- **No real-time traffic**: OSRM uses static speed profiles based on OpenStreetMap.
+
+The architecture is designed so that real sensors are a drop-in replacement for the simulator: they publish to the same MQTT broker, and the downstream pipeline requires no changes.
+
+---
+
+## Context
+
+Montevideo already has the container infrastructure. What's missing is the intelligence to use it better.
+
+SmartWaste MVD is a complete system that demonstrates how data-driven route optimization can transform urban waste collection — from IoT data ingestion to the app in the driver's hand, through an analytics pipeline that enables continuous measurement and improvement of results.

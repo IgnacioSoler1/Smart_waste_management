@@ -1,33 +1,33 @@
 # JITP — Just In Time Provisioning
 
-Provisioning automático de dispositivos ESP32 en AWS IoT Core.
+Automatic provisioning of ESP32 devices in AWS IoT Core.
 
-## Cómo funciona
+## How it works
 
-1. Se crea una CA (Certificate Authority) propia y se registra en AWS IoT Core
-2. Cada dispositivo recibe un certificado firmado por esa CA
-3. La primera vez que un dispositivo se conecta a IoT Core, AWS reconoce la CA
-4. IoT Core ejecuta automáticamente el template JITP:
-   - Crea una Thing con el nombre del CN del certificado
-   - Activa el certificado
-   - Adjunta la política `smartwaste-dev-sensor-policy`
+1. A custom CA (Certificate Authority) is created and registered in AWS IoT Core
+2. Each device receives a certificate signed by that CA
+3. The first time a device connects to IoT Core, AWS recognizes the CA
+4. IoT Core automatically executes the JITP template:
+   - Creates a Thing with the certificate's CN as the name
+   - Activates the certificate
+   - Attaches the `smartwaste-dev-sensor-policy`
 
-## Setup inicial (una sola vez)
+## Initial setup (one time only)
 
 ```bash
-# 1. Registrar la CA en AWS IoT Core
+# 1. Register the CA in AWS IoT Core
 ./register_ca.sh ./ca-keys personal-classify
 
-# Guardar ca-keys/ en un lugar seguro (NO en el repo)
+# Store ca-keys/ in a secure location (NOT in the repo)
 ```
 
-## Provisionar un dispositivo nuevo
+## Provisioning a new device
 
 ```bash
-# 1. Generar certificado del dispositivo
+# 1. Generate device certificate
 ./generate_device_cert.sh smartwaste-dev-101941 ./ca-keys/ca.cert.pem ./ca-keys/ca.key.pem ./device-certs/
 
-# 2. Crear archivo CSV para NVS partition generator
+# 2. Create CSV file for the NVS partition generator
 cat > nvs_data.csv << 'EOF'
 key,type,encoding,value
 smartwaste,namespace,,
@@ -36,32 +36,32 @@ dev_cert,file,string,./device-certs/smartwaste-dev-101941.cert.pem
 dev_key,file,string,./device-certs/smartwaste-dev-101941.key.pem
 EOF
 
-# 3. Generar binario NVS
+# 3. Generate NVS binary
 python $IDF_PATH/components/nvs_flash/nvs_partition_generator/nvs_partition_gen.py \
     generate nvs_data.csv nvs_data.bin 0x10000
 
-# 4. Flash al ESP32
+# 4. Flash to ESP32
 esptool.py --port /dev/ttyUSB0 write_flash 0x9000 nvs_data.bin
 
-# 5. Flash firmware (si no está ya)
+# 5. Flash firmware (if not already flashed)
 cd ../
 idf.py -p /dev/ttyUSB0 flash
 
-# 6. Verificar en AWS
+# 6. Verify in AWS
 aws iot describe-thing --thing-name smartwaste-dev-101941 --profile personal-classify
 ```
 
-## Archivos
+## Files
 
-| Archivo | Descripción |
-|---------|-------------|
-| `register_ca.sh` | Genera CA y la registra en IoT Core (ejecutar una vez) |
-| `generate_device_cert.sh` | Genera cert+key por dispositivo, firmado por la CA |
-| `jitp_template.json` | Template que IoT Core usa para crear Thing+Cert+Policy |
+| File | Description |
+|------|-------------|
+| `register_ca.sh` | Generates a CA and registers it in IoT Core (run once) |
+| `generate_device_cert.sh` | Generates a cert + key per device, signed by the CA |
+| `jitp_template.json` | Template used by IoT Core to create Thing + Cert + Policy |
 
-## Seguridad
+## Security
 
-- La CA private key (`ca.key.pem`) **nunca** debe estar en el repositorio
-- Los device keys se flashean al NVS del ESP32 y no se guardan en el repo
-- El directorio `ca-keys/` está en `.gitignore`
-- En producción, usar AWS KMS o HSM para almacenar la CA key
+- The CA private key (`ca.key.pem`) must **never** be committed to the repository
+- Device keys are flashed to the ESP32 NVS and are not stored in the repo
+- The `ca-keys/` directory is listed in `.gitignore`
+- In production, use AWS KMS or an HSM to store the CA key

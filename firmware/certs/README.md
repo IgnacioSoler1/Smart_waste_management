@@ -1,23 +1,23 @@
-# Certificados de desarrollo
+# Development certificates
 
-Este directorio es para certificados de desarrollo local.
-**No commitear certificados ni keys privadas a git.**
+This directory holds certificates for local development.
+**Do not commit certificates or private keys to git.**
 
-## Archivos necesarios
+## Required files
 
-Para desarrollo local, necesitás:
+For local development you need:
 
 1. **Amazon Root CA** (`AmazonRootCA1.pem`):
    ```bash
    curl -o AmazonRootCA1.pem https://www.amazontrust.com/repository/AmazonRootCA1.pem
    ```
 
-2. **Device certificate** y **private key**: generados con los scripts de provisioning.
+2. **Device certificate** and **private key**: generated with the provisioning scripts.
    ```bash
    cd ../provisioning
    ./generate_device_cert.sh smartwaste-dev-000000 ./ca-keys/ca.cert.pem ./ca-keys/ca.key.pem ../certs/
    ```
 
-## Flashear certificados al ESP32
+## Flashing certificates to the ESP32
 
-Los certificados se almacenan en la partición NVS del ESP32. Ver `../provisioning/README.md` para instrucciones detalladas.
+Certificates are stored in the ESP32's NVS partition. See `../provisioning/README.md` for detailed instructions.
