@@ -55,13 +55,15 @@ resource "aws_internet_gateway" "main" {
 # Las subnets privadas en us-east-1b también la usan (sin HA entre AZs).
 
 resource "aws_eip" "nat" {
+  count      = var.cuopt_self_hosted ? 0 : 1
   domain     = "vpc"
   depends_on = [aws_internet_gateway.main]
   tags       = { Name = "${local.name_prefix}-nat-eip" }
 }
 
 resource "aws_nat_gateway" "main" {
-  allocation_id = aws_eip.nat.id
+  count         = var.cuopt_self_hosted ? 0 : 1
+  allocation_id = aws_eip.nat[0].id
   subnet_id     = aws_subnet.public[0].id
   depends_on    = [aws_internet_gateway.main]
   tags          = { Name = "${local.name_prefix}-nat" }
@@ -86,11 +88,17 @@ resource "aws_route_table_association" "public" {
 
 resource "aws_route_table" "private" {
   vpc_id = aws_vpc.main.id
-  route {
-    cidr_block     = "0.0.0.0/0"
-    nat_gateway_id = aws_nat_gateway.main.id
-  }
-  tags = { Name = "${local.name_prefix}-rt-private" }
+  tags   = { Name = "${local.name_prefix}-rt-private" }
+}
+
+# Ruta a Internet vía NAT — solo cuando cuOpt no es self-hosted.
+# Cuando cuopt_self_hosted=true, la Lambda no necesita internet: DynamoDB y S3
+# usan Gateway Endpoints, Firehose usa Interface Endpoint, OSRM y cuOpt son VPC-internos.
+resource "aws_route" "private_nat" {
+  count                  = var.cuopt_self_hosted ? 0 : 1
+  route_table_id         = aws_route_table.private.id
+  destination_cidr_block = "0.0.0.0/0"
+  nat_gateway_id         = aws_nat_gateway.main[0].id
 }
 
 resource "aws_route_table_association" "private" {
@@ -157,4 +165,43 @@ resource "aws_vpc_endpoint" "kinesis_firehose" {
   private_dns_enabled = true
 
   tags = { Name = "${local.name_prefix}-endpoint-firehose" }
+}
+
+# ── VPC Interface Endpoints — ECR + CloudWatch Logs ──────────────────────────
+# Requeridos cuando cuopt_self_hosted=true (sin NAT Gateway).
+# ECS Fargate necesita acceder a ECR para pull de imágenes y a CloudWatch Logs
+# para el log driver awslogs. Sin NAT ni estos endpoints, los tasks fallan con
+# "ResourceInitializationError: unable to pull secrets or registry auth".
+#
+# Se crean siempre (no solo cuando cuopt_self_hosted=true) porque también
+# benefician al ECS OSRM — reducen latencia y evitan depender de NAT para pulls.
+
+resource "aws_vpc_endpoint" "ecr_api" {
+  vpc_id              = aws_vpc.main.id
+  service_name        = "com.amazonaws.${local.region}.ecr.api"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = aws_subnet.private[*].id
+  security_group_ids  = [aws_security_group.vpc_endpoints.id]
+  private_dns_enabled = true
+  tags                = { Name = "${local.name_prefix}-endpoint-ecr-api" }
+}
+
+resource "aws_vpc_endpoint" "ecr_dkr" {
+  vpc_id              = aws_vpc.main.id
+  service_name        = "com.amazonaws.${local.region}.ecr.dkr"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = aws_subnet.private[*].id
+  security_group_ids  = [aws_security_group.vpc_endpoints.id]
+  private_dns_enabled = true
+  tags                = { Name = "${local.name_prefix}-endpoint-ecr-dkr" }
+}
+
+resource "aws_vpc_endpoint" "logs" {
+  vpc_id              = aws_vpc.main.id
+  service_name        = "com.amazonaws.${local.region}.logs"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = aws_subnet.private[*].id
+  security_group_ids  = [aws_security_group.vpc_endpoints.id]
+  private_dns_enabled = true
+  tags                = { Name = "${local.name_prefix}-endpoint-logs" }
 }

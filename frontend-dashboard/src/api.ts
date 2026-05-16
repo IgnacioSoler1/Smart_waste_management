@@ -27,8 +27,18 @@ export async function fetchContainers(circuitId: string): Promise<Container[]> {
 export async function fetchAllContainers(
   circuitIds: string[],
 ): Promise<Container[]> {
-  const batches = await Promise.all(circuitIds.map(fetchContainers))
-  return batches.flat()
+  // Fetch in batches of 10 to avoid browser connection limits,
+  // and use allSettled so one failure doesn't discard everything.
+  const BATCH = 10
+  const all: Container[] = []
+  for (let i = 0; i < circuitIds.length; i += BATCH) {
+    const chunk = circuitIds.slice(i, i + BATCH)
+    const results = await Promise.allSettled(chunk.map(fetchContainers))
+    for (const r of results) {
+      if (r.status === 'fulfilled') all.push(...r.value)
+    }
+  }
+  return all
 }
 
 export async function fetchRoutes(circuitId: string): Promise<Route[]> {

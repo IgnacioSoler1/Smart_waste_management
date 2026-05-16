@@ -378,3 +378,9 @@ constraints.py
 - [cuOpt Examples (GitHub)](https://github.com/NVIDIA/cuopt-examples)
 - [OSRM Table API](http://project-osrm.org/docs/v5.5.1/api/#table-service)
 - [OR-Tools VRP](https://developers.google.com/optimization/routing/vrp)
+
+sudo docker ps -a
+
+sudo docker logs cuopt
+
+sudo cat /var/log/cloud-init-output.log

@@ -1,135 +1,131 @@
-<mxfile host="Claude">
+<mxfile host="app.diagrams.net">
   <diagram name="Ingesta de Datos" id="data-ingestion">
-    <mxGraphModel adaptiveColors="auto" dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1000" math="0" shadow="0">
+    <mxGraphModel dx="1377" dy="947" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1000" background="#ffffff" math="0" shadow="0" adaptiveColors="auto">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-
-        <mxCell id="title" value="SmartWaste MVD — Pipeline de Ingesta de Datos" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=20;fontStyle=1;fontColor=#232F3E;" vertex="1" parent="1">
-          <mxGeometry x="200" y="20" width="1200" height="40" as="geometry" />
+        <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=20;fontStyle=1;fontColor=#232F3E;" value="SmartWaste MVD — Data ingestion pipeline" vertex="1">
+          <mxGeometry height="40" width="1200" x="10" y="20" as="geometry" />
         </mxCell>
-
-        <mxCell id="outer" value="INGESTA DE DATOS" style="swimlane;startSize=35;fillColor=#E8F5E9;strokeColor=#2E7D32;fontStyle=1;fontSize=14;fontColor=#1B5E20;" vertex="1" parent="1">
-          <mxGeometry x="30" y="80" width="1580" height="840" as="geometry" />
+        <mxCell id="outer" parent="1" style="swimlane;startSize=35;fillColor=#E8F5E9;strokeColor=#2E7D32;fontStyle=1;fontSize=14;fontColor=#1B5E20;" value="DATA INGESTION" vertex="1">
+          <mxGeometry height="840" width="1151" x="30" y="80" as="geometry" />
         </mxCell>
-
-        <mxCell id="lane_mqtt" value="Publicación MQTT (IoT Core)" style="swimlane;startSize=30;fillColor=#f0f9ff;strokeColor=#4a90d9;fontStyle=1;fontSize=11;fontColor=#1a3a5c;" vertex="1" parent="outer">
-          <mxGeometry x="20" y="50" width="1530" height="190" as="geometry" />
+        <mxCell id="lane_mqtt" parent="outer" style="swimlane;startSize=30;fillColor=#f0f9ff;strokeColor=#4a90d9;fontStyle=1;fontSize=13;fontColor=#1a3a5c;" value="MQTT (IoT Core) Publication" vertex="1">
+          <mxGeometry height="190" width="1110" x="20" y="50" as="geometry" />
         </mxCell>
-
-        <mxCell id="sim" value="Sensor Simulator&#xa;(Lambda Python)" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;fillColor=#FF9900;strokeColor=none;fontColor=#232F3E;fontSize=11;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;" vertex="1" parent="lane_mqtt">
-          <mxGeometry x="50" y="55" width="60" height="60" as="geometry" />
+        <mxCell id="sim" parent="lane_mqtt" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;fillColor=#FF9900;strokeColor=none;fontColor=#232F3E;fontSize=13;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;" value="Sensor Simulator&#xa;(Lambda Python)" vertex="1">
+          <mxGeometry height="60" width="60" x="140" y="53" as="geometry" />
         </mxCell>
-
-        <mxCell id="iot" value="AWS IoT Core&#xa;MQTT Broker TLS:8883" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.iot;fillColor=#1FAB54;strokeColor=none;fontColor=#232F3E;fontSize=11;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;" vertex="1" parent="lane_mqtt">
-          <mxGeometry x="280" y="55" width="60" height="60" as="geometry" />
+        <mxCell id="iot" parent="lane_mqtt" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.iot;fillColor=#1FAB54;strokeColor=none;fontColor=#232F3E;fontSize=13;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;" value="AWS IoT Core&#xa;MQTT Broker TLS:8883" vertex="1">
+          <mxGeometry height="60" width="60" x="490" y="53" as="geometry" />
         </mxCell>
-
-        <mxCell id="iot_rule" value="IoT Rule&#xa;(fanout)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;fontStyle=1;" vertex="1" parent="lane_mqtt">
-          <mxGeometry x="530" y="65" width="100" height="50" as="geometry" />
+        <mxCell id="iot_rule" parent="lane_mqtt" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;fontStyle=1;" value="IoT Rule&#xa;(fanout)" vertex="1">
+          <mxGeometry height="50" width="100" x="620" y="58" as="geometry" />
         </mxCell>
-
-        <mxCell id="e_sim_iot" value="PUBLISH&#xa;smartwaste-dev/sensors/{id}" style="edgeStyle=orthogonalEdgeStyle;rounded=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" source="sim" target="iot" parent="lane_mqtt">
+        <mxCell id="e_sim_iot" edge="1" parent="lane_mqtt" source="sim" style="edgeStyle=orthogonalEdgeStyle;rounded=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="iot" value="PUBLISH&#xa;smartwaste-dev/sensors/{id}">
+          <mxGeometry relative="1" x="-0.051" y="15" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_iot_rule" edge="1" parent="lane_mqtt" source="iot" style="edgeStyle=orthogonalEdgeStyle;rounded=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="iot_rule" value="">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e_iot_rule" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" source="iot" target="iot_rule" parent="lane_mqtt">
+        <mxCell id="payload_note" parent="lane_mqtt" style="text;html=1;strokeColor=#6c8ebf;fillColor=#dae8fc;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=10;" value="{&quot;container_id&quot;:&quot;12345&quot;,&quot;fill_level&quot;:73.4,&quot;timestamp&quot;:&quot;...&quot;,&quot;battery_level&quot;:87}" vertex="1">
+          <mxGeometry height="40" width="380" x="20" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="fanout_label" parent="lane_mqtt" style="text;html=1;strokeColor=#d6b656;fillColor=#fff2cc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=10;fontStyle=2;" value="&lt;font style=&quot;font-size: 12px;&quot;&gt;simultaneous fanout&lt;/font&gt;" vertex="1">
+          <mxGeometry height="40" width="120" x="710" y="123" as="geometry" />
+        </mxCell>
+        <mxCell id="vem_Mnq9seymq7zwMhtY-1" parent="lane_mqtt" style="sketch=0;points=[[0,0,0],[0.25,0,0],[0.5,0,0],[0.75,0,0],[1,0,0],[0,1,0],[0.25,1,0],[0.5,1,0],[0.75,1,0],[1,1,0],[0,0.25,0],[0,0.5,0],[0,0.75,0],[1,0.25,0],[1,0.5,0],[1,0.75,0]];outlineConnect=0;fontColor=#232F3E;fillColor=#7AA116;strokeColor=#ffffff;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=0;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.iot_core;" value="" vertex="1">
+          <mxGeometry height="60" width="60" x="490" y="53" as="geometry" />
+        </mxCell>
+        <mxCell id="lane_proc" parent="outer" style="swimlane;startSize=30;fillColor=#fff8e1;strokeColor=#f9a825;fontStyle=1;fontSize=13;fontColor=#5d4037;" value="Operational Processing (SQS → Lambda → DynamoDB)" vertex="1">
+          <mxGeometry height="230" width="1110" x="20" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="sqs" parent="lane_proc" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.sqs;fillColor=#FF4F8B;strokeColor=none;fontColor=#232F3E;fontSize=13;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;" value="SQS Queue&#xa;sensor-readings&#xa;batch 100 / 10s" vertex="1">
+          <mxGeometry height="60" width="60" x="80" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="psr" parent="lane_proc" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;fillColor=#FF9900;strokeColor=none;fontColor=#232F3E;fontSize=13;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;" value="Lambda&#xa;process-sensor-reading&#xa;ThreadPool 20 workers" vertex="1">
+          <mxGeometry height="60" width="60" x="340" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="dyn_cont" parent="lane_proc" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.dynamodb;fillColor=#3F48CC;strokeColor=none;fontColor=#232F3E;fontSize=11;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;" value="DynamoDB&#xa;smartwaste-containers&#xa;fill_level, needs_collection" vertex="1">
+          <mxGeometry height="60" width="60" x="660" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="dyn_read" parent="lane_proc" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.dynamodb;fillColor=#3F48CC;strokeColor=none;fontColor=#232F3E;fontSize=11;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;" value="DynamoDB&#xa;sensor-readings&#xa;TTL: 30 days" vertex="1">
+          <mxGeometry height="60" width="60" x="810" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="batch_note" parent="lane_proc" style="text;html=1;strokeColor=#d6b656;fillColor=#fff2cc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=10;" value="&lt;font style=&quot;font-size: 12px;&quot;&gt;ReportBatchItemFailures&lt;br&gt;failed messages are re queued&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="190" x="275" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="e_sqs_psr" edge="1" parent="lane_proc" source="sqs" style="edgeStyle=orthogonalEdgeStyle;rounded=1;" target="psr" value="ESM batch 100">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-
-        <mxCell id="payload_note" value='{"container_id":"12345","fill_level":73.4,"timestamp":"...","battery_level":87}' style="text;html=1;strokeColor=#6c8ebf;fillColor=#dae8fc;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=10;" vertex="1" parent="lane_mqtt">
-          <mxGeometry x="50" y="130" width="380" height="40" as="geometry" />
-        </mxCell>
-
-        <mxCell id="lane_proc" value="Procesamiento Operativo (SQS → Lambda → DynamoDB)" style="swimlane;startSize=30;fillColor=#fff8e1;strokeColor=#f9a825;fontStyle=1;fontSize=11;fontColor=#5d4037;" vertex="1" parent="outer">
-          <mxGeometry x="20" y="260" width="1530" height="230" as="geometry" />
-        </mxCell>
-
-        <mxCell id="sqs" value="SQS Queue&#xa;sensor-readings&#xa;batch 100 / 10s" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.sqs;fillColor=#FF4F8B;strokeColor=none;fontColor=#232F3E;fontSize=11;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;" vertex="1" parent="lane_proc">
-          <mxGeometry x="80" y="65" width="60" height="60" as="geometry" />
-        </mxCell>
-
-        <mxCell id="psr" value="Lambda&#xa;process-sensor-reading&#xa;ThreadPool 20 workers" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;fillColor=#FF9900;strokeColor=none;fontColor=#232F3E;fontSize=11;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;" vertex="1" parent="lane_proc">
-          <mxGeometry x="340" y="65" width="60" height="60" as="geometry" />
-        </mxCell>
-
-        <mxCell id="dyn_cont" value="DynamoDB&#xa;smartwaste-containers&#xa;fill_level, needs_collection" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.dynamodb;fillColor=#3F48CC;strokeColor=none;fontColor=#232F3E;fontSize=11;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;" vertex="1" parent="lane_proc">
-          <mxGeometry x="620" y="45" width="60" height="60" as="geometry" />
-        </mxCell>
-
-        <mxCell id="dyn_read" value="DynamoDB&#xa;sensor-readings&#xa;TTL: 30 días" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.dynamodb;fillColor=#3F48CC;strokeColor=none;fontColor=#232F3E;fontSize=11;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;" vertex="1" parent="lane_proc">
-          <mxGeometry x="820" y="45" width="60" height="60" as="geometry" />
-        </mxCell>
-
-        <mxCell id="batch_note" value="ReportBatchItemFailures&#xa;mensajes fallidos se reencolan" style="text;html=1;strokeColor=#d6b656;fillColor=#fff2cc;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=10;" vertex="1" parent="lane_proc">
-          <mxGeometry x="300" y="155" width="160" height="40" as="geometry" />
-        </mxCell>
-
-        <mxCell id="e_sqs_psr" value="ESM batch 100" style="edgeStyle=orthogonalEdgeStyle;rounded=1;" edge="1" source="sqs" target="psr" parent="lane_proc">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e_psr_cont" value="UpdateItem" style="edgeStyle=orthogonalEdgeStyle;rounded=1;" edge="1" source="psr" target="dyn_cont" parent="lane_proc">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e_psr_read" value="PutItem" style="edgeStyle=orthogonalEdgeStyle;rounded=1;" edge="1" source="psr" target="dyn_read" parent="lane_proc">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-
-        <mxCell id="lane_arch" value="Archivado en Data Lake (S3)" style="swimlane;startSize=30;fillColor=#fce4ec;strokeColor=#c62828;fontStyle=1;fontSize=11;fontColor=#b71c1c;" vertex="1" parent="outer">
-          <mxGeometry x="20" y="510" width="1530" height="300" as="geometry" />
-        </mxCell>
-
-        <mxCell id="kin" value="Kinesis&#xa;Data Stream&#xa;(ON_DEMAND, 24h)" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.kinesis_data_streams;fillColor=#8C4FFF;strokeColor=none;fontColor=#232F3E;fontSize=11;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;" vertex="1" parent="lane_arch">
-          <mxGeometry x="200" y="75" width="60" height="60" as="geometry" />
-        </mxCell>
-
-        <mxCell id="fire" value="Kinesis Firehose&#xa;Flush: 5MB / 300s&#xa;Compresión: GZIP" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.kinesis_data_firehose;fillColor=#8C4FFF;strokeColor=none;fontColor=#232F3E;fontSize=11;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;" vertex="1" parent="lane_arch">
-          <mxGeometry x="500" y="75" width="60" height="60" as="geometry" />
-        </mxCell>
-
-        <mxCell id="s3" value="S3 Data Lake&#xa;Particionado Hive&#xa;year/month/day/hour" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.s3;fillColor=#7AA116;strokeColor=none;fontColor=#232F3E;fontSize=11;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;" vertex="1" parent="lane_arch">
-          <mxGeometry x="800" y="75" width="60" height="60" as="geometry" />
-        </mxCell>
-
-        <mxCell id="athena" value="Glue ETL + Athena&#xa;03:00 UTC" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.athena;fillColor=#8C4FFF;strokeColor=none;fontColor=#232F3E;fontSize=11;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;" vertex="1" parent="lane_arch">
-          <mxGeometry x="1100" y="75" width="60" height="60" as="geometry" />
-        </mxCell>
-
-        <mxCell id="s3_note" value="Lifecycle: 6 reglas&#xa;Bronze 30d→IA, 365d→exp&#xa;Silver 60d→IA, 730d→exp&#xa;Staging 7d→exp" style="text;html=1;strokeColor=#7AA116;fillColor=#d5e8d4;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=10;" vertex="1" parent="lane_arch">
-          <mxGeometry x="760" y="165" width="160" height="60" as="geometry" />
-        </mxCell>
-
-        <mxCell id="e_kin_fire" value="polling" style="edgeStyle=orthogonalEdgeStyle;rounded=1;" edge="1" source="kin" target="fire" parent="lane_arch">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e_fire_s3" value="GZIP" style="edgeStyle=orthogonalEdgeStyle;rounded=1;" edge="1" source="fire" target="s3" parent="lane_arch">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e_s3_athena" value="Partition Projection" style="edgeStyle=orthogonalEdgeStyle;rounded=1;dashed=1;strokeColor=#888888;" edge="1" source="s3" target="athena" parent="lane_arch">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-
-        <mxCell id="e_rule_sqs" value="Acción SQS" style="edgeStyle=orthogonalEdgeStyle;rounded=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" source="iot_rule" target="sqs" parent="outer">
-          <mxGeometry relative="1" as="geometry">
+        <mxCell id="e_psr_cont" edge="1" parent="lane_proc" source="psr" style="edgeStyle=orthogonalEdgeStyle;rounded=1;entryX=-0.011;entryY=0.419;entryDx=0;entryDy=0;entryPerimeter=0;" target="dyn_cont" value="UpdateItem">
+          <mxGeometry relative="1" x="0.3514" y="-20" as="geometry">
+            <mxPoint as="offset" />
             <Array as="points">
-              <mxPoint x="580" y="360" />
-              <mxPoint x="120" y="360" />
+              <mxPoint x="600" y="80" />
+              <mxPoint x="600" y="145" />
             </Array>
           </mxGeometry>
         </mxCell>
-
-        <mxCell id="e_rule_kin" value="Acción Kinesis" style="edgeStyle=orthogonalEdgeStyle;rounded=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" source="iot_rule" target="kin" parent="outer">
-          <mxGeometry relative="1" as="geometry">
+        <mxCell id="e_psr_read" edge="1" parent="lane_proc" source="psr" style="edgeStyle=orthogonalEdgeStyle;rounded=1;" target="dyn_read" value="PutItem">
+          <mxGeometry relative="1" x="0.1818" as="geometry">
+            <mxPoint as="offset" />
             <Array as="points">
-              <mxPoint x="580" y="620" />
-              <mxPoint x="240" y="620" />
+              <mxPoint x="605" y="80" />
+              <mxPoint x="605" y="50" />
             </Array>
           </mxGeometry>
         </mxCell>
-
-        <mxCell id="fanout_label" value="fanout simultáneo" style="text;html=1;strokeColor=#d6b656;fillColor=#fff2cc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=10;fontStyle=2;" vertex="1" parent="outer">
-          <mxGeometry x="620" y="245" width="110" height="30" as="geometry" />
+        <mxCell id="lane_arch" parent="outer" style="swimlane;startSize=30;fillColor=#fce4ec;strokeColor=#c62828;fontStyle=1;fontSize=13;fontColor=#b71c1c;" value="Archived in Data Lake (S3)" vertex="1">
+          <mxGeometry height="300" width="1110" x="20" y="510" as="geometry" />
         </mxCell>
-
+        <mxCell id="kin" parent="lane_arch" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.kinesis_data_streams;fillColor=#8C4FFF;strokeColor=none;fontColor=#232F3E;fontSize=13;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;" value="Kinesis&#xa;Data Stream&#xa;(ON_DEMAND, 24h)" vertex="1">
+          <mxGeometry height="60" width="60" x="200" y="75" as="geometry" />
+        </mxCell>
+        <mxCell id="fire" parent="lane_arch" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.kinesis_data_firehose;fillColor=#8C4FFF;strokeColor=none;fontColor=#232F3E;fontSize=13;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;" value="Kinesis Firehose&#xa;Flush: 5MB / 300s&#xa;Compresión: GZIP" vertex="1">
+          <mxGeometry height="60" width="60" x="426" y="75" as="geometry" />
+        </mxCell>
+        <mxCell id="s3" parent="lane_arch" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.s3;fillColor=#7AA116;strokeColor=none;fontColor=#232F3E;fontSize=13;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;" value="S3 Data Lake&#xa;Hive Partitioning&#xa;year/month/day/hour" vertex="1">
+          <mxGeometry height="60" width="60" x="656" y="75" as="geometry" />
+        </mxCell>
+        <mxCell id="athena" parent="lane_arch" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.athena;fillColor=#8C4FFF;strokeColor=none;fontColor=#232F3E;fontSize=13;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;" value="Glue ETL + Athena&#xa;03:00 UTC" vertex="1">
+          <mxGeometry height="60" width="60" x="980" y="75" as="geometry" />
+        </mxCell>
+        <mxCell id="s3_note" parent="lane_arch" style="text;html=1;strokeColor=#7AA116;fillColor=#d5e8d4;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=10;" value="&lt;font style=&quot;font-size: 12px;&quot;&gt;Lifecycle: 6 reglas&lt;br&gt;Bronze 30d→IA, 365d→exp&lt;br&gt;Silver 60d→IA, 730d→exp&lt;br&gt;Staging 7d→exp&lt;/font&gt;" vertex="1">
+          <mxGeometry height="80" width="170" x="611" y="206" as="geometry" />
+        </mxCell>
+        <mxCell id="e_kin_fire" edge="1" parent="lane_arch" source="kin" style="edgeStyle=orthogonalEdgeStyle;rounded=1;fontSize=13;" target="fire" value="polling">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_fire_s3" edge="1" parent="lane_arch" source="fire" style="edgeStyle=orthogonalEdgeStyle;rounded=1;fontSize=13;" target="s3" value="GZIP">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_s3_athena" edge="1" parent="lane_arch" source="s3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;dashed=1;strokeColor=#888888;" target="athena" value="Partition Projection">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_rule_sqs" edge="1" parent="outer" source="iot_rule" style="edgeStyle=orthogonalEdgeStyle;rounded=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="sqs" value="SQS action">
+          <mxGeometry relative="1" y="-10" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="690" y="300" />
+              <mxPoint x="60" y="300" />
+              <mxPoint x="60" y="340" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_rule_kin" edge="1" parent="outer" source="iot_rule" style="edgeStyle=orthogonalEdgeStyle;rounded=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=13;" target="kin" value="Kinesis action">
+          <mxGeometry relative="1" x="0.6466" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="690" y="300" />
+              <mxPoint x="60" y="300" />
+              <mxPoint x="60" y="620" />
+              <mxPoint x="220" y="620" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
       </root>
     </mxGraphModel>
   </diagram>

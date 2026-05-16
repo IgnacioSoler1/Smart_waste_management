@@ -11,6 +11,10 @@
 #   Lambda (private subnet) → SG rule → ECS task port 5000
 # ─────────────────────────────────────────────────────────
 
+locals {
+  cuopt_ngc_tag = "25.02" # Tag de la imagen cuOpt en NGC. Ver tags disponibles en NGC catalog.
+}
+
 # ── ECR Repository ─────────────────────────────────────────────────────────────
 
 resource "aws_ecr_repository" "osrm" {
@@ -81,6 +85,354 @@ resource "null_resource" "osrm_image_push" {
   }
 
   depends_on = [aws_ecr_repository.osrm]
+}
+
+# ─────────────────────────────────────────────────────────
+# cuOpt — Self-hosted on EC2 GPU (optional)
+#
+# Activated with var.cuopt_self_hosted = true.
+# Lambda calls cuOpt via Cloud Map DNS:
+#   http://cuopt.smartwaste.local:5000/cuopt/
+#
+# EC2 g4dn.2xlarge: 1x T4 16GB GPU (CC 7.5), 8 vCPU, 32GB RAM.
+# Uses AL2 ECS GPU AMI for pre-installed Docker + NVIDIA drivers.
+# ─────────────────────────────────────────────────────────
+
+# ── ECR Repository ───────────────────────────────────────
+
+resource "aws_ecr_repository" "cuopt" {
+  count                = var.cuopt_self_hosted ? 1 : 0
+  name                 = "${local.name_prefix}-cuopt"
+  image_tag_mutability = "MUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+
+  tags = { Name = "${local.name_prefix}-cuopt" }
+}
+
+resource "aws_ecr_lifecycle_policy" "cuopt" {
+  count      = var.cuopt_self_hosted ? 1 : 0
+  repository = aws_ecr_repository.cuopt[0].name
+
+  policy = jsonencode({
+    rules = [{
+      rulePriority = 1
+      description  = "Mantener las últimas 3 imágenes"
+      selection = {
+        tagStatus   = "any"
+        countType   = "imageCountMoreThan"
+        countNumber = 3
+      }
+      action = { type = "expire" }
+    }]
+  })
+}
+
+# ── Pull + Push imagen cuOpt a ECR ───────────────────────
+# Descarga la imagen oficial de NVIDIA NGC y la re-sube a ECR.
+# No usa docker build — evita el paso de "export to image" que
+# requiere ~6 GB de espacio local con la imagen completa de cuOpt.
+
+resource "null_resource" "cuopt_image_push" {
+  count = var.cuopt_self_hosted ? 1 : 0
+
+  triggers = {
+    # Usamos el tag que encontraste en GitHub
+    cuopt_tag = "latest-cuda12.4-py3.11" # Ajustado a un estándar común, o usa "latest-cuda12.9-py3.13" si prefieres
+    ecr_repo  = aws_ecr_repository.cuopt[0].repository_url
+  }
+
+  provisioner "local-exec" {
+    environment = {
+      AWS_PROFILE = "personal-classify"
+    }
+    command = <<-EOT
+      set -e
+      REGION="${local.region}"
+      ACCOUNT="${local.account_id}"
+      REPO="${aws_ecr_repository.cuopt[0].repository_url}"
+      
+      # Usamos EXACTAMENTE la imagen del repo oficial de GitHub
+      GITHUB_IMAGE="nvidia/cuopt:26.4.0-cuda13.0-py3.13"
+
+      echo "==> Login a ECR..."
+      aws ecr get-login-password --region "$REGION" | \
+        docker login --username AWS --password-stdin "$ACCOUNT.dkr.ecr.$REGION.amazonaws.com"
+
+      echo "==> Pull imagen cuOpt pública desde GitHub/DockerHub..."
+      # Intentamos bajarla directo sin el login restrictivo de NGC
+      docker pull --platform linux/amd64 "$GITHUB_IMAGE"
+
+      echo "==> Tag para ECR..."
+      docker tag "$GITHUB_IMAGE" "$REPO:latest"
+
+      echo "==> Push a ECR..."
+      docker push "$REPO:latest"
+
+      echo "==> Limpieza imagen local..."
+      docker rmi "$GITHUB_IMAGE" || true
+
+      echo "==> ✓ Imagen cuOpt publicada: $REPO:latest"
+    EOT
+  }
+
+  depends_on = [aws_ecr_repository.cuopt]
+}
+
+# ── CloudWatch Log Group ─────────────────────────────────
+
+resource "aws_cloudwatch_log_group" "cuopt" {
+  count             = var.cuopt_self_hosted ? 1 : 0
+  name              = "/ecs/${local.name_prefix}/cuopt"
+  retention_in_days = 7
+  tags              = { Name = "${local.name_prefix}-cuopt-logs" }
+}
+
+# ── Cloud Map — Service Discovery ────────────────────────
+
+resource "aws_service_discovery_service" "cuopt" {
+  count = var.cuopt_self_hosted ? 1 : 0
+  name  = "cuopt"
+
+  dns_config {
+    namespace_id = aws_service_discovery_private_dns_namespace.smartwaste.id
+    dns_records {
+      ttl  = 10
+      type = "A"
+    }
+    routing_policy = "MULTIVALUE"
+  }
+
+  health_check_custom_config {
+    failure_threshold = 1
+  }
+
+  tags = { Name = "${local.name_prefix}-sd-cuopt" }
+}
+
+# ── Security Group ───────────────────────────────────────
+
+resource "aws_security_group" "cuopt" {
+  count       = var.cuopt_self_hosted ? 1 : 0
+  name        = "${local.name_prefix}-cuopt-sg"
+  description = "cuOpt Fargate - accepts port 8080 from route-optimizer Lambda"
+  vpc_id      = aws_vpc.main.id
+
+  egress {
+    description = "All outbound traffic"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = { Name = "${local.name_prefix}-cuopt-sg" }
+}
+
+# Regla cruzada: Lambda → cuOpt en puerto 5000
+resource "aws_security_group_rule" "lambda_to_cuopt" {
+  count                    = var.cuopt_self_hosted ? 1 : 0
+  type                     = "egress"
+  description              = "cuOpt HTTP API"
+  from_port                = 5000
+  to_port                  = 5000
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.route_optimizer_lambda.id
+  source_security_group_id = aws_security_group.cuopt[0].id
+}
+
+resource "aws_security_group_rule" "cuopt_from_lambda" {
+  count                    = var.cuopt_self_hosted ? 1 : 0
+  type                     = "ingress"
+  description              = "cuOpt HTTP desde Lambda route-optimizer"
+  from_port                = 5000
+  to_port                  = 5000
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.cuopt[0].id
+  source_security_group_id = aws_security_group.route_optimizer_lambda.id
+}
+
+resource "aws_security_group_rule" "cuopt_endpoint_https" {
+  count             = var.cuopt_self_hosted ? 1 : 0
+  type              = "ingress"
+  description       = "Permitir HTTPS interno para VPC Endpoints"
+  from_port         = 443
+  to_port           = 443
+  protocol          = "tcp"
+  security_group_id = aws_security_group.cuopt[0].id
+  cidr_blocks       = [aws_vpc.main.cidr_block]
+}
+
+# ── EC2 GPU Instance — cuOpt Server ──────────────────────
+#
+# g4dn.2xlarge: 1x T4 16GB (CC 7.5), 8 vCPU, 32GB RAM.
+# Uses Amazon Linux 2 ECS GPU AMI (Docker + NVIDIA drivers pre-installed).
+# We disable the ECS agent — only Docker is needed.
+
+data "aws_ami" "gpu_al2" {
+  count       = var.cuopt_self_hosted ? 1 : 0
+  most_recent = true
+  owners      = ["amazon"]
+
+  filter {
+    name   = "name"
+    values = ["amzn2-ami-ecs-gpu-hvm-*-x86_64-ebs"]
+  }
+
+  filter {
+    name   = "state"
+    values = ["available"]
+  }
+}
+
+# ── IAM Role for EC2 ─────────────────────────────────────
+
+resource "aws_iam_role" "cuopt_ec2" {
+  count = var.cuopt_self_hosted ? 1 : 0
+  name  = "${local.name_prefix}-cuopt-ec2"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Service = "ec2.amazonaws.com" }
+      Action    = "sts:AssumeRole"
+    }]
+  })
+
+  tags = { Name = "${local.name_prefix}-cuopt-ec2-role" }
+}
+
+resource "aws_iam_role_policy" "cuopt_ec2_ecr" {
+  count = var.cuopt_self_hosted ? 1 : 0
+  name  = "ecr-pull"
+  role  = aws_iam_role.cuopt_ec2[0].id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid      = "ECRAuth"
+        Effect   = "Allow"
+        Action   = ["ecr:GetAuthorizationToken"]
+        Resource = "*"
+      },
+      {
+        Sid    = "ECRPull"
+        Effect = "Allow"
+        Action = [
+          "ecr:BatchGetImage",
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchCheckLayerAvailability",
+        ]
+        Resource = aws_ecr_repository.cuopt[0].arn
+      },
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "cuopt_ec2_logs" {
+  count = var.cuopt_self_hosted ? 1 : 0
+  name  = "cloudwatch-logs"
+  role  = aws_iam_role.cuopt_ec2[0].id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "logs:CreateLogStream",
+        "logs:PutLogEvents",
+      ]
+      Resource = "${aws_cloudwatch_log_group.cuopt[0].arn}:*"
+    }]
+  })
+}
+
+# SSM Session Manager for debugging
+resource "aws_iam_role_policy_attachment" "cuopt_ec2_ssm" {
+  count      = var.cuopt_self_hosted ? 1 : 0
+  role       = aws_iam_role.cuopt_ec2[0].name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
+resource "aws_iam_instance_profile" "cuopt" {
+  count = var.cuopt_self_hosted ? 1 : 0
+  name  = "${local.name_prefix}-cuopt-ec2"
+  role  = aws_iam_role.cuopt_ec2[0].name
+}
+
+# ── EC2 Instance ─────────────────────────────────────────
+
+resource "aws_instance" "cuopt" {
+  count                  = var.cuopt_self_hosted ? 1 : 0
+  ami                    = data.aws_ami.gpu_al2[0].id
+  instance_type          = "g5.2xlarge"
+  subnet_id              = aws_subnet.private[0].id
+  vpc_security_group_ids = [aws_security_group.cuopt[0].id]
+  iam_instance_profile   = aws_iam_instance_profile.cuopt[0].name
+
+  root_block_device {
+    volume_size = 100
+    volume_type = "gp3"
+  }
+
+  user_data = base64encode(templatefile("${path.module}/templates/cuopt-userdata.sh", {
+    ecr_repo_url = aws_ecr_repository.cuopt[0].repository_url
+    region       = local.region
+    account_id   = local.account_id
+    cuopt_api_key = var.cuopt_api_key
+  }))
+
+  tags = { Name = "${local.name_prefix}-cuopt-gpu" }
+
+  depends_on = [null_resource.cuopt_image_push]
+}
+
+# ── Cloud Map Registration ───────────────────────────────
+# Register EC2's private IP so Lambda discovers cuOpt via DNS:
+#   cuopt.smartwaste.local → EC2 private IP
+
+resource "aws_service_discovery_instance" "cuopt" {
+  count       = var.cuopt_self_hosted ? 1 : 0
+  instance_id = aws_instance.cuopt[0].id
+  service_id  = aws_service_discovery_service.cuopt[0].id
+
+  attributes = {
+    AWS_INSTANCE_IPV4 = aws_instance.cuopt[0].private_ip
+  }
+}
+
+# Endpoint para el servicio central de SSM
+resource "aws_vpc_endpoint" "ssm" {
+  vpc_id              = aws_vpc.main.id
+  service_name        = "com.amazonaws.${local.region}.ssm"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = aws_subnet.private[*].id
+  security_group_ids  = [aws_security_group.cuopt[0].id] # Reutiliza el SG para permitir tráfico
+  private_dns_enabled = true
+}
+
+# Endpoint para los mensajes de SSM (necesario para Session Manager)
+resource "aws_vpc_endpoint" "ssmmessages" {
+  vpc_id              = aws_vpc.main.id
+  service_name        = "com.amazonaws.${local.region}.ssmmessages"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = aws_subnet.private[*].id
+  security_group_ids  = [aws_security_group.cuopt[0].id]
+  private_dns_enabled = true
+}
+
+# Endpoint para interactuar con la EC2
+resource "aws_vpc_endpoint" "ec2messages" {
+  vpc_id              = aws_vpc.main.id
+  service_name        = "com.amazonaws.${local.region}.ec2messages"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = aws_subnet.private[*].id
+  security_group_ids  = [aws_security_group.cuopt[0].id]
+  private_dns_enabled = true
 }
 
 # ── Security Groups ────────────────────────────────────────────────────────────
@@ -289,7 +641,6 @@ resource "aws_ecs_service" "osrm" {
   depends_on = [
     null_resource.osrm_image_push,
     aws_ecs_cluster_capacity_providers.main,
-    aws_nat_gateway.main,
   ]
 
   tags = { Name = "${local.name_prefix}-osrm-service" }

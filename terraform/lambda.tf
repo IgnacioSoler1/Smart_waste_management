@@ -518,9 +518,9 @@ resource "aws_lambda_function" "route_optimizer" {
       ROUTES_TABLE     = aws_dynamodb_table.routes.name
       OSRM_URL         = var.osrm_url
       OSRM_FALLBACK    = var.osrm_url == "http://localhost:5000" ? "haversine" : ""
-      CUOPT_MODE       = var.cuopt_mode
-      CUOPT_API_KEY    = var.cuopt_api_key
-      CUOPT_SERVER_URL = var.cuopt_server_url
+      CUOPT_MODE       = var.cuopt_self_hosted ? "self_hosted" : var.cuopt_mode
+      CUOPT_API_KEY    = var.cuopt_self_hosted ? "" : var.cuopt_api_key
+      CUOPT_SERVER_URL = var.cuopt_self_hosted ? "http://cuopt.smartwaste.local:5000" : var.cuopt_server_url
       # WebSocket: para que ws_notifier pueda notificar conductores tras optimizar
       CONNECTIONS_TABLE = aws_dynamodb_table.connections.name
       WS_ENDPOINT       = "https://${aws_apigatewayv2_api.smartwaste_ws.id}.execute-api.${local.region}.amazonaws.com/dev"
@@ -540,7 +540,8 @@ resource "aws_lambda_function" "route_optimizer" {
     aws_iam_role_policy.route_optimizer_dynamo,
     aws_iam_role_policy.route_optimizer_websocket,
     aws_s3_object.route_optimizer_zip,
-    aws_nat_gateway.main,
+    aws_nat_gateway.main, # conditional (count=0 when cuopt_self_hosted=true)
+    aws_instance.cuopt,   # conditional (count=0 when cuopt_self_hosted=false)
   ]
 }
 

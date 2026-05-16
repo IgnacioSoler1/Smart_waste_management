@@ -585,7 +585,7 @@ def _optimize_circuit(circuit_id: str) -> dict:
             capacities      = capacities,
             depot_start_idx = depot_start_idx,
             depot_end_idx   = depot_end_idx,
-            time_limit      = 10,
+            time_limit      = 5,
             prizes          = prizes,
         )
     except Exception as exc:
