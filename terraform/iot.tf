@@ -98,64 +98,128 @@ resource "aws_iot_policy" "sensor_policy" {
   }
 }
 
-# ── JITP (Just In Time Provisioning) ────────────────────
-# IAM role que IoT Core asume para crear Things y activar
-# certificados durante el provisioning automático de
-# dispositivos ESP32.
+# ── JITR (Just-in-Time Registration) ───────────────────
+# Provisioning automático de dispositivos ESP32.
+#
+# Flujo:
+#   1. Dispositivo nuevo conecta con cert firmado por la CA registrada
+#   2. IoT Core auto-registra el cert (PENDING_ACTIVATION)
+#   3. IoT Core publica en $aws/events/certificates/registered/<caCertId>
+#   4. IoT Rule dispara Lambda jitr-provisioning
+#   5. Lambda crea Thing, activa cert, attacha policy
+#   6. Dispositivo reconecta en siguiente boot → funciona
 #
 # La CA se registra manualmente con:
 #   cd firmware/provisioning && ./register_ca.sh
 #
-# El template JITP (firmware/provisioning/jitp_template.json)
-# se pasa al registrar la CA. Define qué Thing, Policy y
-# Certificate se crean automáticamente cuando un nuevo
-# dispositivo se conecta por primera vez.
+# La variable var.iot_ca_certificate_id se obtiene del output de register_ca.sh
+# y se configura en terraform.tfvars.
 
-resource "aws_iam_role" "iot_jitp_role" {
-  name = "${local.name_prefix}-iot-jitp-role"
+# ── Lambda JITR ────────────────────────────────────────
+
+data "archive_file" "jitr_provisioning" {
+  type        = "zip"
+  source_dir  = "${path.module}/../lambdas/jitr-provisioning"
+  output_path = "${path.module}/.terraform/jitr-provisioning.zip"
+}
+
+resource "aws_iam_role" "jitr_lambda" {
+  name = "${local.name_prefix}-jitr-lambda-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Principal = {
-          Service = "iot.amazonaws.com"
-        }
-        Action = "sts:AssumeRole"
-      }
-    ]
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Service = "lambda.amazonaws.com" }
+      Action    = "sts:AssumeRole"
+    }]
   })
 
   tags = {
-    Name = "${local.name_prefix}-iot-jitp-role"
+    Name = "${local.name_prefix}-jitr-lambda-role"
   }
 }
 
-resource "aws_iam_role_policy" "iot_jitp_policy" {
-  name = "${local.name_prefix}-iot-jitp-policy"
-  role = aws_iam_role.iot_jitp_role.id
+resource "aws_iam_role_policy_attachment" "jitr_lambda_logs" {
+  role       = aws_iam_role.jitr_lambda.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+resource "aws_iam_role_policy" "jitr_lambda_iot" {
+  name = "iot-provisioning-permissions"
+  role = aws_iam_role.jitr_lambda.id
 
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [
-      {
-        Sid    = "AllowJITPCreateResources"
-        Effect = "Allow"
-        Action = [
-          "iot:CreateThing",
-          "iot:DescribeThing",
-          "iot:UpdateThing",
-          "iot:AddThingToThingGroup",
-          "iot:UpdateCertificate",
-          "iot:AttachPolicy",
-          "iot:AttachThingPrincipal",
-          "iot:DescribeCertificate",
-        ]
-        Resource = "*"
-      }
-    ]
+    Statement = [{
+      Sid    = "AllowJITRProvisionResources"
+      Effect = "Allow"
+      Action = [
+        "iot:DescribeCertificate",
+        "iot:UpdateCertificate",
+        "iot:CreateThing",
+        "iot:DescribeThing",
+        "iot:AttachPolicy",
+        "iot:AttachThingPrincipal",
+      ]
+      Resource = "*"
+    }]
   })
+}
+
+resource "aws_lambda_function" "jitr_provisioning" {
+  function_name    = "${local.name_prefix}-jitr-provisioning"
+  description      = "JITR: provisiona dispositivos ESP32 automáticamente en su primera conexión"
+  role             = aws_iam_role.jitr_lambda.arn
+  runtime          = "python3.12"
+  handler          = "handler.handler"
+  filename         = data.archive_file.jitr_provisioning.output_path
+  source_code_hash = data.archive_file.jitr_provisioning.output_base64sha256
+  timeout          = 30
+  memory_size      = 128
+
+  environment {
+    variables = {
+      IOT_POLICY_NAME = aws_iot_policy.sensor_policy.name
+      IOT_THING_TYPE  = aws_iot_thing_type.waste_container.name
+    }
+  }
+
+  depends_on = [
+    aws_iam_role_policy_attachment.jitr_lambda_logs,
+    aws_iam_role_policy.jitr_lambda_iot,
+  ]
+}
+
+resource "aws_cloudwatch_log_group" "jitr_provisioning" {
+  name              = "/aws/lambda/${aws_lambda_function.jitr_provisioning.function_name}"
+  retention_in_days = 14
+}
+
+# ── IoT Rule: certificate registered → Lambda ─────────
+
+resource "aws_lambda_permission" "jitr_iot_invoke" {
+  statement_id  = "AllowIoTInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.jitr_provisioning.function_name
+  principal     = "iot.amazonaws.com"
+}
+
+resource "aws_iot_topic_rule" "jitr_provision" {
+  count = var.iot_ca_certificate_id != "" ? 1 : 0
+
+  name        = "${replace(local.name_prefix, "-", "_")}_jitr_provision"
+  enabled     = true
+  sql         = "SELECT * FROM '$aws/events/certificates/registered/${var.iot_ca_certificate_id}'"
+  sql_version = "2016-03-23"
+
+  lambda {
+    function_arn = aws_lambda_function.jitr_provisioning.arn
+  }
+
+  tags = {
+    Name = "${local.name_prefix}-jitr-provision"
+  }
 }
 
 # ── Endpoint IoT (dato de referencia) ────────────────────

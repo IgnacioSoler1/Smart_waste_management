@@ -20,6 +20,14 @@ variable "project_prefix" {
   }
 }
 
+# ── IoT JITR ─────────────────────────────────────────────
+
+variable "iot_ca_certificate_id" {
+  description = "ID del certificado CA registrado en IoT Core. Se obtiene al ejecutar firmware/provisioning/register_ca.sh."
+  type        = string
+  default     = ""
+}
+
 # ── route-optimizer ───────────────────────────────────────
 
 variable "osrm_url" {

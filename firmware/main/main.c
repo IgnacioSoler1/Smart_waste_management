@@ -23,20 +23,31 @@
 #include <math.h>
 
 #include "esp_log.h"
+#include "esp_random.h"
+#ifndef CONFIG_SMARTWASTE_SIMULATE_SENSORS
 #include "esp_adc/adc_oneshot.h"
 #include "esp_adc/adc_cali.h"
 #include "esp_adc/adc_cali_scheme.h"
+#endif
 #include "nvs_flash.h"
 #include "nvs.h"
 
 #include "app_config.h"
+#ifndef CONFIG_SMARTWASTE_SIMULATE_SENSORS
 #include "sensors/sensor_interface.h"
 #include "sensors/jsn_sr04t.h"
 #include "sensors/vl53l1x.h"
 #include "measurement/outlier_filter.h"
 #include "measurement/fill_calculator.h"
+#endif
+
+#ifdef CONFIG_SMARTWASTE_CONNECTIVITY_WIFI
+#include "connectivity/wifi_sta.h"
+#else
 #include "connectivity/sim800l.h"
-#include "connectivity/mqtt_client.h"
+#endif
+
+#include "connectivity/sw_mqtt_client.h"
 #include "connectivity/ntp_sync.h"
 #include "power/sleep_manager.h"
 
@@ -45,9 +56,10 @@ static const char *TAG = "main";
 // Amazon Root CA 1 (ATS) — embedded for TLS to AWS IoT Core
 // In production, this would be read from NVS along with device certs.
 // This is the public Amazon Root CA, not a secret.
-extern const uint8_t aws_root_ca_pem_start[] asm("_binary_aws_root_ca_pem_start");
-extern const uint8_t aws_root_ca_pem_end[]   asm("_binary_aws_root_ca_pem_end");
+extern const uint8_t aws_root_ca_pem_start[] asm("_binary_AmazonRootCA1_pem_start");
+extern const uint8_t aws_root_ca_pem_end[]   asm("_binary_AmazonRootCA1_pem_end");
 
+#ifndef CONFIG_SMARTWASTE_SIMULATE_SENSORS
 // ── Battery reading ────────────────────────────────────
 
 static float read_battery_percent(void)
@@ -94,6 +106,7 @@ static float read_temperature(void)
     // For now, return a placeholder — internal temp sensor API varies by ESP-IDF version
     return 25.0f; // TODO: implement with temperature_sensor_install() on ESP-IDF 5.x
 }
+#endif
 
 // ── NVS helpers ────────────────────────────────────────
 
@@ -161,6 +174,13 @@ void app_main(void)
         sleep_manager_enter_deep_sleep(APP_DEEP_SLEEP_SEC);
     }
 
+    // Steps 3-7: Sensors — real or simulated
+#ifdef CONFIG_SMARTWASTE_SIMULATE_SENSORS
+    float fill_level = (float)(esp_random() % 1000) / 10.0f; // 0.0-99.9%
+    float battery = 85.0f;
+    float temperature = 22.0f;
+    ESP_LOGI(TAG, "[SIMULATED] fill=%.1f%% bat=%.1f%% temp=%.1f°C", fill_level, battery, temperature);
+#else
     // Step 3: Init sensors
     sensor_config_t jsn_config = {
         .pin_a = APP_JSN_TX_PIN,
@@ -196,7 +216,7 @@ void app_main(void)
             readings[reading_count++] = (fill_sensor_reading_t){
                 .distance_mm = median,
                 .angle_deg = APP_JSN_MOUNT_ANGLE_DEG,
-                .weight = 1.0f,  // Ultrasonic gets full weight (vertical primary sensor)
+                .weight = 1.0f,
             };
         }
     }
@@ -207,7 +227,7 @@ void app_main(void)
             readings[reading_count++] = (fill_sensor_reading_t){
                 .distance_mm = median,
                 .angle_deg = APP_VL53_MOUNT_ANGLE_DEG,
-                .weight = 0.7f,  // ToF gets slightly lower weight (secondary/validation)
+                .weight = 0.7f,
             };
         }
     }
@@ -231,8 +251,16 @@ void app_main(void)
 
     // Step 7: Read temperature
     float temperature = read_temperature();
+#endif
 
-    // Step 8: Power on SIM800L + connect GPRS
+    // Step 8: Network connectivity — WiFi or GPRS
+#ifdef CONFIG_SMARTWASTE_CONNECTIVITY_WIFI
+    err = sw_wifi_init(APP_WIFI_SSID, APP_WIFI_PASSWORD);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "WiFi connection failed");
+        goto cleanup;
+    }
+#else
     sim800l_config_t sim_config = {
         .uart_num = APP_SIM_UART_NUM,
         .tx_pin = APP_SIM_TX_PIN,
@@ -259,6 +287,7 @@ void app_main(void)
         ESP_LOGE(TAG, "GPRS connection failed");
         goto cleanup;
     }
+#endif
 
     // Step 9: Sync NTP if needed
     ntp_sync_init();
@@ -330,11 +359,18 @@ cleanup:
     // Step 12: Cleanup
     mqtt_client_disconnect();
     ntp_sync_deinit();
+
+#ifdef CONFIG_SMARTWASTE_CONNECTIVITY_WIFI
+    sw_wifi_disconnect();
+#else
     sim800l_disconnect();
     sim800l_power_off();
+#endif
 
+#ifndef CONFIG_SMARTWASTE_SIMULATE_SENSORS
     if (jsn_ok) jsn_sr04t_driver.deinit();
     if (vl53_ok) vl53l1x_driver.deinit();
+#endif
 
     free(device_cert);
     free(device_key);

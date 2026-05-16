@@ -1,5 +1,42 @@
 menu "SmartWaste Sensor Configuration"
 
+    menu "Connectivity Mode"
+        choice SMARTWASTE_CONNECTIVITY_MODE
+            prompt "Network connectivity mode"
+            default SMARTWASTE_CONNECTIVITY_GPRS
+
+            config SMARTWASTE_CONNECTIVITY_WIFI
+                bool "WiFi (dev/testing — no SIM800L needed)"
+                help
+                    Connect via WiFi. Use this for development and testing
+                    when you don't have a SIM800L module connected.
+
+            config SMARTWASTE_CONNECTIVITY_GPRS
+                bool "GPRS/2G (production — SIM800L required)"
+                help
+                    Connect via SIM800L GPRS modem. Use this for production
+                    deployments with cellular connectivity.
+        endchoice
+
+        config SMARTWASTE_WIFI_SSID
+            string "WiFi SSID"
+            default "my-wifi"
+            depends on SMARTWASTE_CONNECTIVITY_WIFI
+
+        config SMARTWASTE_WIFI_PASSWORD
+            string "WiFi Password"
+            default ""
+            depends on SMARTWASTE_CONNECTIVITY_WIFI
+
+        config SMARTWASTE_SIMULATE_SENSORS
+            bool "Simulate sensor readings (no real sensors needed)"
+            default y if SMARTWASTE_CONNECTIVITY_WIFI
+            default n
+            help
+                Generate fake fill_level readings instead of reading
+                real sensors. Useful for testing without hardware.
+    endmenu
+
     menu "Container"
         config SMARTWASTE_CONTAINER_ID
             string "Container ID (gid from Intendencia data)"

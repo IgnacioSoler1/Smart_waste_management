@@ -49,7 +49,7 @@ openssl genrsa -out "${DEVICE_KEY}" 2048 2>/dev/null
 chmod 600 "${DEVICE_KEY}"
 
 # Step 2: Generate Certificate Signing Request (CSR)
-# The CN (Common Name) becomes the ThingName in JITP
+# The CN (Common Name) becomes the ThingName in JITR
 echo "2. Generating CSR with CN=${DEVICE_ID}..."
 openssl req -new \
     -key "${DEVICE_KEY}" \

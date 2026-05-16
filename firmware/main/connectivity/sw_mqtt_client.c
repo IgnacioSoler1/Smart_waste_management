@@ -1,15 +1,10 @@
-#include "mqtt_client.h"
+#include "sw_mqtt_client.h"
 
 #include <string.h>
 #include "esp_log.h"
-#include "mqtt_client.h"
-// ESP-IDF MQTT library header (different from our header)
-#include "esp_mqtt.h"
+#include "mqtt_client.h"   // ESP-IDF espressif/mqtt component
 #include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
-
-// Rename to avoid conflict with ESP-IDF's mqtt_client.h
-// We use the esp_mqtt_client_* API from ESP-IDF's mqtt component.
 
 static const char *TAG = "mqtt";
 

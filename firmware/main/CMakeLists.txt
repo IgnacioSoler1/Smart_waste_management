@@ -6,8 +6,9 @@ idf_component_register(
         "measurement/fill_calculator.c"
         "measurement/outlier_filter.c"
         "connectivity/sim800l.c"
-        "connectivity/mqtt_client.c"
+        "connectivity/sw_mqtt_client.c"
         "connectivity/ntp_sync.c"
+        "connectivity/wifi_sta.c"
         "power/sleep_manager.c"
     INCLUDE_DIRS
         "."
@@ -17,12 +18,18 @@ idf_component_register(
         "power"
     REQUIRES
         driver
+        esp_driver_gpio
+        esp_driver_uart
+        esp_driver_i2c
         esp_adc
         esp_event
         esp_netif
         esp_timer
-        mqtt
+        esp_wifi
+        espressif__mqtt
         nvs_flash
         mbedtls
         lwip
+    EMBED_TXTFILES
+        "${PROJECT_DIR}/certs/AmazonRootCA1.pem"
 )

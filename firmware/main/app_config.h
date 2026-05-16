@@ -22,6 +22,12 @@
 
 #define APP_SENSOR_READINGS       CONFIG_SMARTWASTE_SENSOR_READINGS_COUNT
 
+// ── WiFi (dev mode) ─────────────────────────────────────
+#ifdef CONFIG_SMARTWASTE_CONNECTIVITY_WIFI
+#define APP_WIFI_SSID             CONFIG_SMARTWASTE_WIFI_SSID
+#define APP_WIFI_PASSWORD         CONFIG_SMARTWASTE_WIFI_PASSWORD
+#endif
+
 // ── SIM800L ────────────────────────────────────────────
 #define APP_SIM_UART_NUM          CONFIG_SMARTWASTE_SIM800L_UART_NUM
 #define APP_SIM_TX_PIN            CONFIG_SMARTWASTE_SIM800L_TX_PIN

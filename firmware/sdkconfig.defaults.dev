@@ -1,0 +1,27 @@
+# SmartWaste MVD — Dev mode defaults (WiFi + simulated sensors)
+#
+# Usage:
+#   idf.py -D SDKCONFIG_DEFAULTS="sdkconfig.defaults;sdkconfig.defaults.dev" build
+#
+# This overrides the production defaults to enable:
+# - WiFi connectivity (no SIM800L needed)
+# - Simulated sensor readings (no hardware sensors needed)
+# - Shorter sleep interval for faster iteration
+
+# WiFi mode
+CONFIG_SMARTWASTE_CONNECTIVITY_WIFI=y
+CONFIG_SMARTWASTE_WIFI_SSID="SolerDiaz-19"
+CONFIG_SMARTWASTE_WIFI_PASSWORD="soler1403"
+
+# Simulate sensors
+CONFIG_SMARTWASTE_SIMULATE_SENSORS=y
+
+# Shorter sleep for development (60 seconds instead of 15 min)
+CONFIG_SMARTWASTE_DEEP_SLEEP_SECONDS=60
+
+# MQTT broker (AWS IoT Core endpoint)
+CONFIG_SMARTWASTE_MQTT_BROKER_URI="mqtts://a1uz2tuwlivsnw-ats.iot.us-east-1.amazonaws.com"
+
+# WiFi security — enable WPA3 support for modern routers
+CONFIG_ESP_WIFI_ENABLE_WPA3_SAE=y
+CONFIG_ESP_WIFI_ENABLE_SAE_PK=y

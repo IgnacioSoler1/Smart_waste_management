@@ -1,5 +1,8 @@
 # ESP-IDF Component Manager dependencies
 # esp_modem provides the AT command / PPP driver for cellular modems (SIM800L)
+# mqtt was moved out of ESP-IDF core in v6.0 — must be declared here
 dependencies:
   espressif/esp_modem:
     version: "^1.1.0"
+  espressif/mqtt:
+    version: "*"

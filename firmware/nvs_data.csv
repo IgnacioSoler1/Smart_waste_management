@@ -1,0 +1,5 @@
+key,type,encoding,value
+smartwaste,namespace,,
+container_id,data,string,101941
+dev_cert,file,string,./provisioning/device-certs/smartwaste-dev-101941.cert.pem
+dev_key,file,string,./provisioning/device-certs/smartwaste-dev-101941.key.pem
