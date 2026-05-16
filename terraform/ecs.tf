@@ -94,7 +94,7 @@ resource "null_resource" "osrm_image_push" {
 # Lambda calls cuOpt via Cloud Map DNS:
 #   http://cuopt.smartwaste.local:5000/cuopt/
 #
-# EC2 g4dn.2xlarge: 1x T4 16GB GPU (CC 7.5), 8 vCPU, 32GB RAM.
+# EC2 g5.2xlarge: 1x A10G 24GB GPU, 8 vCPU, 32GB RAM.
 # Uses AL2 ECS GPU AMI for pre-installed Docker + NVIDIA drivers.
 # ─────────────────────────────────────────────────────────
 
@@ -267,7 +267,7 @@ resource "aws_security_group_rule" "cuopt_endpoint_https" {
 
 # ── EC2 GPU Instance — cuOpt Server ──────────────────────
 #
-# g4dn.2xlarge: 1x T4 16GB (CC 7.5), 8 vCPU, 32GB RAM.
+# g5.2xlarge: 1x A10G 24GB GPU, 8 vCPU, 32GB RAM.
 # Uses Amazon Linux 2 ECS GPU AMI (Docker + NVIDIA drivers pre-installed).
 # We disable the ECS agent — only Docker is needed.
 
@@ -407,16 +407,18 @@ resource "aws_service_discovery_instance" "cuopt" {
 
 # Endpoint para el servicio central de SSM
 resource "aws_vpc_endpoint" "ssm" {
+  count               = var.cuopt_self_hosted ? 1 : 0
   vpc_id              = aws_vpc.main.id
   service_name        = "com.amazonaws.${local.region}.ssm"
   vpc_endpoint_type   = "Interface"
   subnet_ids          = aws_subnet.private[*].id
-  security_group_ids  = [aws_security_group.cuopt[0].id] # Reutiliza el SG para permitir tráfico
+  security_group_ids  = [aws_security_group.cuopt[0].id]
   private_dns_enabled = true
 }
 
 # Endpoint para los mensajes de SSM (necesario para Session Manager)
 resource "aws_vpc_endpoint" "ssmmessages" {
+  count               = var.cuopt_self_hosted ? 1 : 0
   vpc_id              = aws_vpc.main.id
   service_name        = "com.amazonaws.${local.region}.ssmmessages"
   vpc_endpoint_type   = "Interface"
@@ -427,6 +429,7 @@ resource "aws_vpc_endpoint" "ssmmessages" {
 
 # Endpoint para interactuar con la EC2
 resource "aws_vpc_endpoint" "ec2messages" {
+  count               = var.cuopt_self_hosted ? 1 : 0
   vpc_id              = aws_vpc.main.id
   service_name        = "com.amazonaws.${local.region}.ec2messages"
   vpc_endpoint_type   = "Interface"

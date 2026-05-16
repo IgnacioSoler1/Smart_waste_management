@@ -413,7 +413,7 @@ OSRM puede generar matrices asimétricas (duración A→B ≠ B→A por sentidos
 Con ~117 circuitos activos × 4 turnos/día × 30 días = ~14.000 llamadas/mes. **El free tier no alcanza para producción completa.** Opciones:
 
 - Usar OR-Tools para circuitos con pocos contenedores urgentes (< 10 nodos).
-- Migrar a cuOpt self-hosted en EC2 `g4dn.xlarge` (~$0.50/h spot).
+- Migrar a cuOpt self-hosted en EC2 `g5.2xlarge` (~$1.21/h on-demand). Deploy with `terraform apply -var='cuopt_self_hosted=true'`.
 - Escalar gradualmente: solo activar cuOpt para circuitos con N > 50 contenedores.
 
 ### 10.7 Camiones virtuales

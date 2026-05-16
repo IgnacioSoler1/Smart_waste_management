@@ -1,90 +1,150 @@
 # Terraform — SmartWaste MVD
 
-Infraestructura AWS definida en Terraform para el sistema de optimización de rutas de recolección de residuos de Montevideo.
+AWS infrastructure defined in Terraform for the Montevideo waste collection route optimization system.
 
-## Recursos incluidos
+## Resources
 
-| Archivo | Recursos |
+| File | Resources |
 |---|---|
-| `dynamodb.tf` | 4 tablas DynamoDB on-demand con GSIs y TTL |
-| `iot.tf` | IoT Thing Type + política de acceso para sensores |
-| `kinesis.tf` | Kinesis Data Stream (ON_DEMAND), Firehose × 2, S3 Data Lake, lifecycle 6 reglas |
-| `ecs.tf` | ECR, ECS Cluster/Task (2 vCPU / 4 GB) / Service OSRM, Cloud Map |
-| `lambda.tf` | Lambdas: process-sensor-reading (SQS batch), route-optimizer (timeout 300s, VPC), api, sensor-simulator |
-| `api-gateway.tf` | REST API + stage dev + CloudWatch logs |
+| `dynamodb.tf` | 4 DynamoDB on-demand tables with GSIs and TTL |
+| `iot.tf` | IoT Thing Type + sensor access policy |
+| `kinesis.tf` | Kinesis Data Stream (ON_DEMAND), Firehose x2, S3 Data Lake, 6 lifecycle rules |
+| `ecs.tf` | ECR repos, ECS Cluster/Task/Service for OSRM, Cloud Map, cuOpt EC2 GPU (optional) |
+| `lambda.tf` | Lambdas: process-sensor-reading (SQS batch), route-optimizer (VPC, 300s timeout), api, sensor-simulator |
+| `api-gateway.tf` | REST API + dev stage + CloudWatch logs |
 | `websocket.tf` | WebSocket API + $connect/$disconnect/$default |
-| `vpc.tf` | VPC, subnets privadas, NAT Gateway, VPC Endpoints DynamoDB/S3 |
+| `vpc.tf` | VPC, private subnets, NAT Gateway (conditional), VPC Endpoints for DynamoDB/S3/ECR |
 | `analytics.tf` | Glue Catalog, Athena Workgroup, Glue Job ETL, S3 script upload |
-| `outputs.tf` | ARNs, endpoints, bloque de variables de entorno |
+| `outputs.tf` | ARNs, endpoints, env var block |
 
-**Pipeline de ingesta:** IoT Core → SQS → Lambda batch (100 msgs / 10s) → DynamoDB operativo
-**Archivado analítico:** IoT Core → Kinesis Data Stream (ON_DEMAND) → Firehose → S3 Bronze
+**Ingestion pipeline:** IoT Core -> SQS -> Lambda batch (100 msgs / 10s) -> DynamoDB
+**Analytics archival:** IoT Core -> Kinesis Data Stream (ON_DEMAND) -> Firehose -> S3 Bronze
 
-## Prerequisitos
+## cuOpt deployment modes
+
+The route optimizer uses NVIDIA cuOpt to solve the Vehicle Routing Problem (VRP). There are two deployment modes, controlled by the `cuopt_self_hosted` variable:
+
+### Mode 1: NVIDIA API Catalog (default)
+
+cuOpt runs in NVIDIA's cloud. The Lambda calls the API directly over the internet via NAT Gateway.
+
+```bash
+terraform apply \
+  -var='cuopt_mode=api_catalog' \
+  -var='cuopt_api_key=nvapi-...'
+```
+
+| | |
+|---|---|
+| **Cost** | Free tier: 5,000 requests/month. NAT Gateway: ~$32/month + data transfer |
+| **Latency** | ~2-5s per solve (network round-trip to NVIDIA) |
+| **GPU** | Not required locally |
+| **Best for** | Development, low-volume testing |
+
+### Mode 2: Self-hosted on EC2 GPU
+
+cuOpt runs on an EC2 `g5.2xlarge` instance (1x A10G 24GB GPU, 8 vCPU, 32GB RAM) in a private subnet. The Lambda discovers it via Cloud Map DNS at `cuopt.smartwaste.local:5000`. No NAT Gateway is created.
+
+```bash
+terraform apply -var='cuopt_self_hosted=true'
+```
+
+| | |
+|---|---|
+| **Cost** | ~$1.21/hr on-demand (~$870/month always-on). No NAT Gateway cost |
+| **Latency** | ~200-500ms per solve (VPC-internal) |
+| **GPU** | EC2 g5.2xlarge (A10G 24GB) |
+| **Best for** | Production, high-volume (>5K requests/month) |
+
+**What gets created when `cuopt_self_hosted=true`:**
+- ECR repository + NGC-to-ECR image push
+- EC2 g5.2xlarge with AL2 ECS GPU AMI (Docker + NVIDIA drivers pre-installed)
+- IAM role with ECR pull, CloudWatch Logs, and SSM Session Manager permissions
+- Cloud Map DNS registration (`cuopt.smartwaste.local` -> EC2 private IP)
+- Security group rules (Lambda -> cuOpt on port 5000)
+- VPC endpoints for SSM/SSMMessages/EC2Messages (for debugging via Session Manager)
+
+**To tear down the GPU instance:**
+
+```bash
+terraform apply  # without -var='cuopt_self_hosted=true'
+```
+
+This destroys the EC2 instance, Cloud Map registration, SSM endpoints, and related resources. The Lambda falls back to `cuopt_mode` (default: `ortools`).
+
+### Mode 3: OR-Tools fallback (no GPU, no API)
+
+When neither `cuopt_self_hosted` nor `cuopt_mode=api_catalog` is set, the Lambda uses Google OR-Tools (CPU-only). This is the default.
+
+```bash
+terraform apply  # defaults: cuopt_mode=ortools, cuopt_self_hosted=false
+```
+
+## Prerequisites
 
 - [Terraform](https://developer.hashicorp.com/terraform/install) >= 1.6
-- [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html) configurado con credenciales válidas
-- Permisos IAM necesarios: `AmazonDynamoDBFullAccess`, `AWSIoTFullAccess`
+- [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html) with valid credentials
+- Required IAM permissions: `AmazonDynamoDBFullAccess`, `AWSIoTFullAccess`
 
-### Verificar credenciales
+### Verify credentials
 
 ```bash
 aws sts get-caller-identity
 ```
 
-## Setup inicial
+## Initial setup
 
 ```bash
 cd terraform/
 
-# 1. Descargar providers
+# 1. Download providers
 terraform init
 
-# 2. Ver plan de cambios (sin aplicar)
+# 2. Preview changes (dry run)
 terraform plan
 
-# 3. Aplicar infraestructura
+# 3. Apply infrastructure
 terraform apply
 ```
 
-Terraform pedirá confirmación antes de crear recursos. Para saltearse la confirmación:
+Terraform will prompt for confirmation. To skip:
 
 ```bash
 terraform apply -auto-approve
 ```
 
-## Entornos
+## Environments
 
-El comportamiento cambia según la variable `environment`:
+Behavior changes based on the `environment` variable:
 
 | Variable | `dev` (default) | `prod` |
 |---|---|---|
-| Prefijo de recursos | `smartwaste-dev` | `smartwaste` |
-| Point-in-time recovery | deshabilitado | habilitado |
-| Nombres de tablas | `smartwaste-dev-containers` | `smartwaste-containers` |
+| Resource prefix | `smartwaste-dev` | `smartwaste` |
+| Point-in-time recovery | disabled | enabled |
+| Table names | `smartwaste-dev-containers` | `smartwaste-containers` |
 
-Para desplegar en un entorno específico:
+To deploy to a specific environment:
 
 ```bash
 terraform apply -var="environment=prod"
 ```
 
-O crear un archivo `terraform.tfvars`:
+Or create a `terraform.tfvars` file:
 
 ```hcl
 environment    = "dev"
 project_prefix = "smartwaste"
 ```
 
-## Variables de entorno generadas
+## Generated environment variables
 
-Después de `terraform apply`, obtener el bloque de variables de entorno listo para copiar:
+After `terraform apply`, get the ready-to-copy env var block:
 
 ```bash
 terraform output env_block
 ```
 
-Ejemplo de salida:
+Example output:
 ```
 AWS_REGION=us-east-1
 DYNAMODB_CONTAINERS_TABLE=smartwaste-dev-containers
@@ -94,78 +154,78 @@ DYNAMODB_SENSOR_READINGS_TABLE=smartwaste-dev-sensor-readings
 IOT_ENDPOINT=xxxxxxxxxxxxxxx-ats.iot.us-east-1.amazonaws.com
 ```
 
-Copiar estos valores en el `.env` local y en la configuración de las Lambdas.
+Copy these values to the local `.env` and Lambda configuration.
 
-## Tablas DynamoDB
+## DynamoDB tables
 
 ### `smartwaste-[env]-containers`
-Metadatos estáticos de cada contenedor (ubicación, circuito, capacidad).
+Static metadata for each container (location, circuit, capacity).
 
-| Atributo | Tipo | Rol |
+| Attribute | Type | Role |
 |---|---|---|
 | `container_id` | String | PK |
 | `circuit_id` | String | GSI `circuit-index` PK |
 
 ### `smartwaste-[env]-trucks`
-Estado operativo de cada camión.
+Operational state for each truck.
 
-| Atributo | Tipo | Rol |
+| Attribute | Type | Role |
 |---|---|---|
 | `truck_id` | String | PK |
 | `status` | String | GSI `status-index` PK |
 
-Valores de `status`: `available`, `en_route`, `maintenance`.
+`status` values: `available`, `en_route`, `maintenance`.
 
 ### `smartwaste-[env]-routes`
-Rutas calculadas por el optimizador.
+Routes computed by the optimizer.
 
-| Atributo | Tipo | Rol |
+| Attribute | Type | Role |
 |---|---|---|
 | `route_id` | String | PK |
 | `circuit_id` | String | GSI `circuit-index` PK |
-| `truck_id` | String | Atributo regular (sin GSI) |
+| `truck_id` | String | Regular attribute (no GSI) |
 
-La asociación truck → ruta activa se resuelve a través del campo `active_route_id` en la tabla `trucks`,
-que el optimizer actualiza tras guardar cada ruta. No hay GSI en `truck_id` para evitar replicar
-el historial de 7 días solo para esa consulta.
+The truck-to-active-route association is resolved via the `active_route_id` field in the `trucks` table, updated by the optimizer after saving each route. No GSI on `truck_id` to avoid replicating the 7-day history for that single query.
 
 ### `smartwaste-[env]-sensor-readings`
-Time-series de lecturas de sensores. TTL de 30 días (el historial largo plazo va a S3).
+Sensor readings time-series. 30-day TTL (long-term history goes to S3).
 
-| Atributo | Tipo | Rol |
+| Attribute | Type | Role |
 |---|---|---|
 | `container_id` | String | PK |
 | `timestamp` | String (ISO 8601 UTC) | SK |
 | `ttl` | Number (epoch) | TTL |
 
-## Configuraciones clave
+## Key configurations
 
-| Recurso | Parámetro | Valor |
-|---------|-----------|-------|
+| Resource | Parameter | Value |
+|----------|-----------|-------|
 | Lambda `route-optimizer` | Timeout | 300s (5 min) |
-| Lambda `route-optimizer` | Memoria | 256 MB |
+| Lambda `route-optimizer` | Memory | 512 MB |
 | Lambda `process-sensor-reading` | SQS batch size | 100 msgs |
 | Lambda `process-sensor-reading` | Max batching window | 10s |
 | ECS OSRM | CPU | 2048 (2 vCPU) |
-| ECS OSRM | Memoria | 4096 MB (4 GB) |
+| ECS OSRM | Memory | 4096 MB (4 GB) |
+| EC2 cuOpt (optional) | Instance type | g5.2xlarge (A10G 24GB GPU) |
+| EC2 cuOpt (optional) | Root volume | 100 GB gp3 |
 | Kinesis Data Stream | Mode | ON_DEMAND |
-| S3 Lifecycle | Reglas | 6 (Bronze/Silver/Gold/Staging) |
+| S3 Lifecycle | Rules | 6 (Bronze/Silver/Gold/Staging) |
 
 ## IoT Core
 
 ### Thing Type
-`smartwaste-[env]-WasteContainer` — agrupa todos los contenedores. Atributos buscables: `circuit_id`, `zone`, `shift`.
+`smartwaste-[env]-WasteContainer` — groups all containers. Searchable attributes: `circuit_id`, `zone`, `shift`.
 
-### Política `smartwaste-[env]-sensor-policy`
-Permisos mínimos para dispositivos/simuladores:
+### Policy `smartwaste-[env]-sensor-policy`
+Minimum permissions for devices/simulators:
 
-| Acción | Recurso |
+| Action | Resource |
 |---|---|
 | `iot:Connect` | `client/smartwaste-*` |
 | `iot:Publish`, `iot:RetainPublish` | `topic/smartwaste-*/containers/*/readings`, `topic/smartwaste-*/trucks/*/position` |
 | `iot:Subscribe`, `iot:Receive` | `topicfilter/smartwaste-*/*`, `topic/smartwaste-*/*` |
 
-Para adjuntar esta política a un certificado de dispositivo:
+To attach this policy to a device certificate:
 
 ```bash
 aws iot attach-policy \
@@ -173,13 +233,13 @@ aws iot attach-policy \
   --target <certificate-arn>
 ```
 
-## Estado de Terraform
+## Terraform state
 
-El estado se guarda localmente en `terraform/terraform.tfstate`. Este archivo **no debe commitearse** (está en `.gitignore`).
+State is stored locally in `terraform/terraform.tfstate`. This file **must not be committed** (it's in `.gitignore`).
 
-### Migración a backend S3 (cuando se necesite colaboración)
+### Migration to S3 backend (when collaboration is needed)
 
-1. Crear bucket S3 y tabla DynamoDB para lock (fuera de este módulo):
+1. Create an S3 bucket and DynamoDB table for locking (outside this module):
 
 ```bash
 aws s3 mb s3://smartwaste-terraform-state-<account-id> --region us-east-1
@@ -191,7 +251,7 @@ aws dynamodb create-table \
   --region us-east-1
 ```
 
-2. Reemplazar el bloque `backend "local"` en `main.tf`:
+2. Replace the `backend "local"` block in `main.tf`:
 
 ```hcl
 backend "s3" {
@@ -203,20 +263,20 @@ backend "s3" {
 }
 ```
 
-3. Migrar el estado existente:
+3. Migrate the existing state:
 
 ```bash
 terraform init -migrate-state
 ```
 
-## Destruir infraestructura
+## Destroy infrastructure
 
 ```bash
-# Ver qué se destruiría
+# Preview what would be destroyed
 terraform plan -destroy
 
-# Destruir (pide confirmación)
+# Destroy (prompts for confirmation)
 terraform destroy
 ```
 
-> **Atención:** en `prod`, las tablas DynamoDB tienen Point-in-Time Recovery habilitado pero `prevent_destroy` no está configurado. Agregar si se requiere protección adicional.
+> **Warning:** in `prod`, DynamoDB tables have Point-in-Time Recovery enabled but `prevent_destroy` is not configured. Add it if additional protection is needed.

@@ -53,7 +53,7 @@ variable "cuopt_server_url" {
 }
 
 variable "cuopt_self_hosted" {
-  description = "Deploy cuOpt on a GPU EC2 instance (g4dn.2xlarge). When true, no NAT Gateway is created."
+  description = "Deploy cuOpt on a GPU EC2 instance (g5.2xlarge). When true, no NAT Gateway is created."
   type        = bool
   default     = false
 }

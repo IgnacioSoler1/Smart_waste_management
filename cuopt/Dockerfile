@@ -9,7 +9,7 @@
 # Solver:       POST /cuopt/
 #
 # NOTE: cuOpt requires GPU. Fargate (CPU-only) will fail with
-# MemoryError from RMM. Use EC2 launch type with g4dn instances.
+# MemoryError from RMM. Use EC2 GPU instances (e.g. g5.2xlarge).
 
 FROM nvcr.io/nvidia/cuopt/cuopt:25.02
 
