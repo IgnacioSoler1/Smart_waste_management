@@ -101,7 +101,6 @@ resource "null_resource" "osrm_image_push" {
 # ── ECR Repository ───────────────────────────────────────
 
 resource "aws_ecr_repository" "cuopt" {
-  count                = var.cuopt_self_hosted ? 1 : 0
   name                 = "${local.name_prefix}-cuopt"
   image_tag_mutability = "MUTABLE"
 
@@ -113,8 +112,7 @@ resource "aws_ecr_repository" "cuopt" {
 }
 
 resource "aws_ecr_lifecycle_policy" "cuopt" {
-  count      = var.cuopt_self_hosted ? 1 : 0
-  repository = aws_ecr_repository.cuopt[0].name
+  repository = aws_ecr_repository.cuopt.name
 
   policy = jsonencode({
     rules = [{
@@ -141,7 +139,7 @@ resource "null_resource" "cuopt_image_push" {
   triggers = {
     # Usamos el tag que encontraste en GitHub
     cuopt_tag = "latest-cuda12.4-py3.11" # Ajustado a un estándar común, o usa "latest-cuda12.9-py3.13" si prefieres
-    ecr_repo  = aws_ecr_repository.cuopt[0].repository_url
+    ecr_repo  = aws_ecr_repository.cuopt.repository_url
   }
 
   provisioner "local-exec" {
@@ -152,7 +150,7 @@ resource "null_resource" "cuopt_image_push" {
       set -e
       REGION="${local.region}"
       ACCOUNT="${local.account_id}"
-      REPO="${aws_ecr_repository.cuopt[0].repository_url}"
+      REPO="${aws_ecr_repository.cuopt.repository_url}"
       
       # Usamos EXACTAMENTE la imagen del repo oficial de GitHub
       GITHUB_IMAGE="nvidia/cuopt:26.4.0-cuda13.0-py3.13"
@@ -327,7 +325,7 @@ resource "aws_iam_role_policy" "cuopt_ec2_ecr" {
           "ecr:GetDownloadUrlForLayer",
           "ecr:BatchCheckLayerAvailability",
         ]
-        Resource = aws_ecr_repository.cuopt[0].arn
+        Resource = aws_ecr_repository.cuopt.arn
       },
     ]
   })
@@ -380,7 +378,7 @@ resource "aws_instance" "cuopt" {
   }
 
   user_data = base64encode(templatefile("${path.module}/templates/cuopt-userdata.sh", {
-    ecr_repo_url = aws_ecr_repository.cuopt[0].repository_url
+    ecr_repo_url = aws_ecr_repository.cuopt.repository_url
     region       = local.region
     account_id   = local.account_id
     cuopt_api_key = var.cuopt_api_key
