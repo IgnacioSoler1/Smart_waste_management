@@ -111,11 +111,11 @@ resource "aws_lambda_function" "api" {
   filename         = data.archive_file.api.output_path
   source_code_hash = data.archive_file.api.output_base64sha256
 
-  # 256 MB: las respuestas incluyen listas de hasta ~100 contenedores.
-  # 15 s: el Scan de rutas para /circuits/{id}/route puede tardar < 1 s;
-  #       15 s cubre el cold start y picos de latencia de DynamoDB.
-  memory_size = 256
-  timeout     = 15
+  # 512 MB: GET /containers escanea ~11 K items y serializa ~3 MB de JSON.
+  # 30 s: el full scan puede tardar ~3 s en caliente, más cold start ~5 s;
+  #       30 s cubre picos de latencia de DynamoDB con margen.
+  memory_size = 512
+  timeout     = 30
 
   environment {
     variables = {
@@ -181,6 +181,12 @@ resource "aws_api_gateway_resource" "circuit_route" {
   rest_api_id = aws_api_gateway_rest_api.smartwaste.id
   parent_id   = aws_api_gateway_resource.circuit.id
   path_part   = "route"
+}
+
+resource "aws_api_gateway_resource" "containers" {
+  rest_api_id = aws_api_gateway_rest_api.smartwaste.id
+  parent_id   = aws_api_gateway_rest_api.smartwaste.root_resource_id
+  path_part   = "containers"
 }
 
 resource "aws_api_gateway_resource" "trucks" {
@@ -419,6 +425,70 @@ resource "aws_api_gateway_integration_response" "circuit_route_options" {
   response_parameters = local.cors_headers
 
   depends_on = [aws_api_gateway_integration.circuit_route_options]
+}
+
+
+# ─────────────────────────────────────────────────────────
+# GET /containers  (todos los contenedores, un solo request)
+# ─────────────────────────────────────────────────────────
+
+resource "aws_api_gateway_method" "containers_get" {
+  rest_api_id   = aws_api_gateway_rest_api.smartwaste.id
+  resource_id   = aws_api_gateway_resource.containers.id
+  http_method   = "GET"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "containers_get" {
+  rest_api_id             = aws_api_gateway_rest_api.smartwaste.id
+  resource_id             = aws_api_gateway_resource.containers.id
+  http_method             = aws_api_gateway_method.containers_get.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.api.invoke_arn
+}
+
+# OPTIONS /containers — CORS preflight
+resource "aws_api_gateway_method" "containers_options" {
+  rest_api_id   = aws_api_gateway_rest_api.smartwaste.id
+  resource_id   = aws_api_gateway_resource.containers.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "containers_options" {
+  rest_api_id          = aws_api_gateway_rest_api.smartwaste.id
+  resource_id          = aws_api_gateway_resource.containers.id
+  http_method          = aws_api_gateway_method.containers_options.http_method
+  type                 = "MOCK"
+  request_templates    = { "application/json" = "{\"statusCode\": 200}" }
+  passthrough_behavior = "WHEN_NO_MATCH"
+}
+
+resource "aws_api_gateway_method_response" "containers_options" {
+  rest_api_id = aws_api_gateway_rest_api.smartwaste.id
+  resource_id = aws_api_gateway_resource.containers.id
+  http_method = aws_api_gateway_method.containers_options.http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+
+  response_models = { "application/json" = "Empty" }
+}
+
+resource "aws_api_gateway_integration_response" "containers_options" {
+  rest_api_id = aws_api_gateway_rest_api.smartwaste.id
+  resource_id = aws_api_gateway_resource.containers.id
+  http_method = aws_api_gateway_method.containers_options.http_method
+  status_code = aws_api_gateway_method_response.containers_options.status_code
+
+  response_parameters = local.cors_headers
+
+  depends_on = [aws_api_gateway_integration.containers_options]
 }
 
 
@@ -846,6 +916,7 @@ resource "aws_api_gateway_deployment" "smartwaste" {
       aws_api_gateway_resource.circuit.id,
       aws_api_gateway_resource.circuit_containers.id,
       aws_api_gateway_resource.circuit_route.id,
+      aws_api_gateway_resource.containers.id,
       aws_api_gateway_resource.trucks.id,
       aws_api_gateway_resource.routes.id,
       aws_api_gateway_resource.routes_comparison.id,
@@ -858,6 +929,8 @@ resource "aws_api_gateway_deployment" "smartwaste" {
 
       aws_api_gateway_integration.circuits_get.id,
       aws_api_gateway_integration.circuits_options.id,
+      aws_api_gateway_integration.containers_get.id,
+      aws_api_gateway_integration.containers_options.id,
       aws_api_gateway_integration.circuit_containers_get.id,
       aws_api_gateway_integration.circuit_containers_options.id,
       aws_api_gateway_integration.circuit_route_get.id,
@@ -886,6 +959,7 @@ resource "aws_api_gateway_deployment" "smartwaste" {
   depends_on = [
     # Métodos GET/POST
     aws_api_gateway_method.circuits_get,
+    aws_api_gateway_method.containers_get,
     aws_api_gateway_method.circuit_containers_get,
     aws_api_gateway_method.circuit_route_get,
     aws_api_gateway_method.trucks_get,
@@ -896,6 +970,7 @@ resource "aws_api_gateway_deployment" "smartwaste" {
     aws_api_gateway_method.analytics_route_efficiency_trends_get,
     # Integraciones GET/POST
     aws_api_gateway_integration.circuits_get,
+    aws_api_gateway_integration.containers_get,
     aws_api_gateway_integration.circuit_containers_get,
     aws_api_gateway_integration.circuit_route_get,
     aws_api_gateway_integration.trucks_get,
@@ -906,6 +981,7 @@ resource "aws_api_gateway_deployment" "smartwaste" {
     aws_api_gateway_integration.analytics_route_efficiency_trends_get,
     # Métodos OPTIONS
     aws_api_gateway_method.circuits_options,
+    aws_api_gateway_method.containers_options,
     aws_api_gateway_method.circuit_containers_options,
     aws_api_gateway_method.circuit_route_options,
     aws_api_gateway_method.trucks_options,
@@ -916,6 +992,7 @@ resource "aws_api_gateway_deployment" "smartwaste" {
     aws_api_gateway_method.analytics_route_efficiency_trends_options,
     # Integraciones OPTIONS (MOCK)
     aws_api_gateway_integration.circuits_options,
+    aws_api_gateway_integration.containers_options,
     aws_api_gateway_integration.circuit_containers_options,
     aws_api_gateway_integration.circuit_route_options,
     aws_api_gateway_integration.trucks_options,
@@ -926,6 +1003,7 @@ resource "aws_api_gateway_deployment" "smartwaste" {
     aws_api_gateway_integration.analytics_route_efficiency_trends_options,
     # Integration responses OPTIONS
     aws_api_gateway_integration_response.circuits_options,
+    aws_api_gateway_integration_response.containers_options,
     aws_api_gateway_integration_response.circuit_containers_options,
     aws_api_gateway_integration_response.circuit_route_options,
     aws_api_gateway_integration_response.trucks_options,

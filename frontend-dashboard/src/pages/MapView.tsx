@@ -66,22 +66,14 @@ export function MapView({ circuits, trucks, loading }: Props) {
   const [filterFill, setFilterFill] = useState<FillFilter>('__all__')
   const [filterShift, setFilterShift] = useState<ShiftFilter>('__all__')
 
-  const circuitIds = useMemo(
-    () =>
-      filterCircuit === '__all__'
-        ? circuits.map((c) => c.circuit_id)
-        : [filterCircuit],
-    [circuits, filterCircuit],
-  )
-
-  const containersFetcher = useCallback(
-    () => fetchAllContainers(circuitIds),
-    [circuitIds],
-  )
-  const { data: containers } = usePolling<Container[]>(containersFetcher, [circuitIds])
+  const containersFetcher = useCallback(() => fetchAllContainers(), [])
+  const { data: containers } = usePolling<Container[]>(containersFetcher)
 
   const displayContainers = useMemo(() => {
     let all = containers ?? []
+    if (filterCircuit !== '__all__') {
+      all = all.filter((c) => c.circuit_id === filterCircuit)
+    }
     if (filterShift !== '__all__') {
       all = all.filter((c) => c.shift === filterShift)
     }
@@ -91,7 +83,7 @@ export function MapView({ circuits, trucks, loading }: Props) {
       const level = c.fill_level ?? 0
       return level >= f.min && level < f.max
     })
-  }, [containers, filterFill, filterShift])
+  }, [containers, filterCircuit, filterFill, filterShift])
 
   const filteredTrucks = useMemo(
     () =>

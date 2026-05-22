@@ -5,6 +5,7 @@ REST API Lambda handler.  Invocado por API Gateway (proxy integration).
 
 Rutas:
   GET  /circuits                   → lista de circuitos con stats agregadas
+  GET  /containers                 → todos los contenedores (scan completo)
   GET  /circuits/{id}/containers   → contenedores del circuito con fill_level
   GET  /circuits/{id}/route        → ruta activa más reciente del circuito
   GET  /trucks                     → lista de camiones con posición y estado
@@ -186,6 +187,36 @@ def _get_circuits() -> dict:
 
     logger.info("GET /circuits: %d circuitos", len(result))
     return _response(200, {"count": len(result), "circuits": result})
+
+
+# ─────────────────────────────────────────────────────────
+# GET /containers
+# ─────────────────────────────────────────────────────────
+
+def _get_all_containers() -> dict:
+    """
+    Scan completo de la tabla de contenedores.  Proyecta solo los campos
+    necesarios para el mapa del dashboard, manteniendo el payload bajo el
+    límite de 6 MB de Lambda (~11 K items × ~200 bytes ≈ 2.2 MB).
+
+    Retorna:
+      {
+        "count": 10937,
+        "containers": [ { container_id, circuit_id, fill_level, latitude,
+                          longitude, shift, needs_collection }, ... ]
+      }
+    """
+    items = _scan_all(
+        _tbl_containers,
+        ProjectionExpression=(
+            "container_id, circuit_id, fill_level, latitude, longitude, "
+            "#s, needs_collection, shift"
+        ),
+        ExpressionAttributeNames={"#s": "status"},
+    )
+
+    logger.info("GET /containers: %d items", len(items))
+    return _response(200, {"count": len(items), "containers": items})
 
 
 # ─────────────────────────────────────────────────────────
@@ -556,6 +587,10 @@ def lambda_handler(event: dict, context: Any) -> dict:
         # GET /circuits
         if method == "GET" and path == "/circuits":
             return _get_circuits()
+
+        # GET /containers  (todos los contenedores, un solo request)
+        if method == "GET" and path == "/containers":
+            return _get_all_containers()
 
         # GET /circuits/{id}/containers
         if method == "GET" and params.get("id") and path.endswith("/containers"):
