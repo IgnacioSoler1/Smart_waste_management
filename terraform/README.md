@@ -22,7 +22,7 @@ AWS infrastructure defined in Terraform for the Montevideo waste collection rout
 
 ## cuOpt deployment modes
 
-The route optimizer uses NVIDIA cuOpt to solve the Vehicle Routing Problem (VRP). There are two deployment modes, controlled by the `cuopt_self_hosted` variable:
+The route optimizer uses NVIDIA cuOpt to solve the Vehicle Routing Problem (VRP). There are three deployment modes, controlled by the `cuopt_mode` variable:
 
 ### Mode 1: NVIDIA API Catalog (default)
 
@@ -46,7 +46,7 @@ terraform apply \
 cuOpt runs on an EC2 `g5.2xlarge` instance (1x A10G 24GB GPU, 8 vCPU, 32GB RAM) in a private subnet. The Lambda discovers it via Cloud Map DNS at `cuopt.smartwaste.local:5000`. No NAT Gateway is created.
 
 ```bash
-terraform apply -var='cuopt_self_hosted=true'
+terraform apply -var='cuopt_mode=self_hosted'
 ```
 
 | | |
@@ -56,7 +56,7 @@ terraform apply -var='cuopt_self_hosted=true'
 | **GPU** | EC2 g5.2xlarge (A10G 24GB) |
 | **Best for** | Production, high-volume (>5K requests/month) |
 
-**What gets created when `cuopt_self_hosted=true`:**
+**What gets created when `cuopt_mode=self_hosted`:**
 - ECR repository + NGC-to-ECR image push
 - EC2 g5.2xlarge with AL2 ECS GPU AMI (Docker + NVIDIA drivers pre-installed)
 - IAM role with ECR pull, CloudWatch Logs, and SSM Session Manager permissions
@@ -67,17 +67,17 @@ terraform apply -var='cuopt_self_hosted=true'
 **To tear down the GPU instance:**
 
 ```bash
-terraform apply  # without -var='cuopt_self_hosted=true'
+terraform apply  # without -var='cuopt_mode=self_hosted'
 ```
 
-This destroys the EC2 instance, Cloud Map registration, SSM endpoints, and related resources. The Lambda falls back to `cuopt_mode` (default: `ortools`).
+This destroys the EC2 instance, Cloud Map registration, SSM endpoints, and related resources. The Lambda falls back to `cuopt_mode` default: `ortools`.
 
 ### Mode 3: OR-Tools fallback (no GPU, no API)
 
-When neither `cuopt_self_hosted` nor `cuopt_mode=api_catalog` is set, the Lambda uses Google OR-Tools (CPU-only). This is the default.
+When `cuopt_mode=ortools` (the default), the Lambda uses Google OR-Tools (CPU-only).
 
 ```bash
-terraform apply  # defaults: cuopt_mode=ortools, cuopt_self_hosted=false
+terraform apply  # default: cuopt_mode=ortools
 ```
 
 ## Prerequisites

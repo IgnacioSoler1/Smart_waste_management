@@ -31,14 +31,18 @@ resource "aws_ecr_repository" "osrm" {
 resource "aws_ecr_lifecycle_policy" "osrm" {
   repository = aws_ecr_repository.osrm.name
 
+  # IMPORTANT: Only expire *untagged* images. Expiring "any" (including tagged)
+  # can delete the digest ECS has cached for :latest, causing CannotPullContainerError
+  # and taking down the service until a force-new-deployment re-resolves the tag.
   policy = jsonencode({
     rules = [{
       rulePriority = 1
-      description  = "Mantener las últimas 3 imágenes"
+      description  = "Limpiar imágenes untagged después de 7 días"
       selection = {
-        tagStatus   = "any"
-        countType   = "imageCountMoreThan"
-        countNumber = 3
+        tagStatus   = "untagged"
+        countType   = "sinceImagePushed"
+        countUnit   = "days"
+        countNumber = 7
       }
       action = { type = "expire" }
     }]
@@ -71,8 +75,13 @@ resource "null_resource" "osrm_image_push" {
         docker login --username AWS --password-stdin "$ACCOUNT.dkr.ecr.$REGION.amazonaws.com"
 
       echo "==> Build imagen OSRM (linux/amd64)..."
+      # --provenance=false prevents Docker buildx from creating a multi-manifest
+      # image index with separate attestation manifests. Without this flag, ECR
+      # lifecycle policies can delete the architecture-specific manifest inside
+      # the index, breaking ECS pulls even though the :latest tag still exists.
       docker build \
         --platform linux/amd64 \
+        --provenance=false \
         --file "${path.module}/../osrm/Dockerfile.ecr" \
         --tag "$REPO:latest" \
         "${path.module}/../osrm"
@@ -90,7 +99,7 @@ resource "null_resource" "osrm_image_push" {
 # ─────────────────────────────────────────────────────────
 # cuOpt — Self-hosted on EC2 GPU (optional)
 #
-# Activated with var.cuopt_self_hosted = true.
+# Activated with var.cuopt_mode = "self_hosted".
 # Lambda calls cuOpt via Cloud Map DNS:
 #   http://cuopt.smartwaste.local:5000/cuopt/
 #
@@ -117,11 +126,12 @@ resource "aws_ecr_lifecycle_policy" "cuopt" {
   policy = jsonencode({
     rules = [{
       rulePriority = 1
-      description  = "Mantener las últimas 3 imágenes"
+      description  = "Limpiar imágenes untagged después de 7 días"
       selection = {
-        tagStatus   = "any"
-        countType   = "imageCountMoreThan"
-        countNumber = 3
+        tagStatus   = "untagged"
+        countType   = "sinceImagePushed"
+        countUnit   = "days"
+        countNumber = 7
       }
       action = { type = "expire" }
     }]
@@ -134,11 +144,10 @@ resource "aws_ecr_lifecycle_policy" "cuopt" {
 # requiere ~6 GB de espacio local con la imagen completa de cuOpt.
 
 resource "null_resource" "cuopt_image_push" {
-  count = var.cuopt_self_hosted ? 1 : 0
+  count = var.cuopt_mode == "self_hosted" ? 1 : 0
 
   triggers = {
-    # Usamos el tag que encontraste en GitHub
-    cuopt_tag = "latest-cuda12.4-py3.11" # Ajustado a un estándar común, o usa "latest-cuda12.9-py3.13" si prefieres
+    cuopt_tag = "latest-cuda12.4-py3.11"
     ecr_repo  = aws_ecr_repository.cuopt.repository_url
   }
 
@@ -182,7 +191,7 @@ resource "null_resource" "cuopt_image_push" {
 # ── CloudWatch Log Group ─────────────────────────────────
 
 resource "aws_cloudwatch_log_group" "cuopt" {
-  count             = var.cuopt_self_hosted ? 1 : 0
+  count             = var.cuopt_mode == "self_hosted" ? 1 : 0
   name              = "/ecs/${local.name_prefix}/cuopt"
   retention_in_days = 7
   tags              = { Name = "${local.name_prefix}-cuopt-logs" }
@@ -191,7 +200,7 @@ resource "aws_cloudwatch_log_group" "cuopt" {
 # ── Cloud Map — Service Discovery ────────────────────────
 
 resource "aws_service_discovery_service" "cuopt" {
-  count = var.cuopt_self_hosted ? 1 : 0
+  count = var.cuopt_mode == "self_hosted" ? 1 : 0
   name  = "cuopt"
 
   dns_config {
@@ -213,7 +222,7 @@ resource "aws_service_discovery_service" "cuopt" {
 # ── Security Group ───────────────────────────────────────
 
 resource "aws_security_group" "cuopt" {
-  count       = var.cuopt_self_hosted ? 1 : 0
+  count       = var.cuopt_mode == "self_hosted" ? 1 : 0
   name        = "${local.name_prefix}-cuopt-sg"
   description = "cuOpt Fargate - accepts port 8080 from route-optimizer Lambda"
   vpc_id      = aws_vpc.main.id
@@ -231,7 +240,7 @@ resource "aws_security_group" "cuopt" {
 
 # Regla cruzada: Lambda → cuOpt en puerto 5000
 resource "aws_security_group_rule" "lambda_to_cuopt" {
-  count                    = var.cuopt_self_hosted ? 1 : 0
+  count                    = var.cuopt_mode == "self_hosted" ? 1 : 0
   type                     = "egress"
   description              = "cuOpt HTTP API"
   from_port                = 5000
@@ -242,7 +251,7 @@ resource "aws_security_group_rule" "lambda_to_cuopt" {
 }
 
 resource "aws_security_group_rule" "cuopt_from_lambda" {
-  count                    = var.cuopt_self_hosted ? 1 : 0
+  count                    = var.cuopt_mode == "self_hosted" ? 1 : 0
   type                     = "ingress"
   description              = "cuOpt HTTP desde Lambda route-optimizer"
   from_port                = 5000
@@ -253,7 +262,7 @@ resource "aws_security_group_rule" "cuopt_from_lambda" {
 }
 
 resource "aws_security_group_rule" "cuopt_endpoint_https" {
-  count             = var.cuopt_self_hosted ? 1 : 0
+  count             = var.cuopt_mode == "self_hosted" ? 1 : 0
   type              = "ingress"
   description       = "Permitir HTTPS interno para VPC Endpoints"
   from_port         = 443
@@ -270,7 +279,7 @@ resource "aws_security_group_rule" "cuopt_endpoint_https" {
 # We disable the ECS agent — only Docker is needed.
 
 data "aws_ami" "gpu_al2" {
-  count       = var.cuopt_self_hosted ? 1 : 0
+  count       = var.cuopt_mode == "self_hosted" ? 1 : 0
   most_recent = true
   owners      = ["amazon"]
 
@@ -288,7 +297,7 @@ data "aws_ami" "gpu_al2" {
 # ── IAM Role for EC2 ─────────────────────────────────────
 
 resource "aws_iam_role" "cuopt_ec2" {
-  count = var.cuopt_self_hosted ? 1 : 0
+  count = var.cuopt_mode == "self_hosted" ? 1 : 0
   name  = "${local.name_prefix}-cuopt-ec2"
 
   assume_role_policy = jsonencode({
@@ -304,7 +313,7 @@ resource "aws_iam_role" "cuopt_ec2" {
 }
 
 resource "aws_iam_role_policy" "cuopt_ec2_ecr" {
-  count = var.cuopt_self_hosted ? 1 : 0
+  count = var.cuopt_mode == "self_hosted" ? 1 : 0
   name  = "ecr-pull"
   role  = aws_iam_role.cuopt_ec2[0].id
 
@@ -332,7 +341,7 @@ resource "aws_iam_role_policy" "cuopt_ec2_ecr" {
 }
 
 resource "aws_iam_role_policy" "cuopt_ec2_logs" {
-  count = var.cuopt_self_hosted ? 1 : 0
+  count = var.cuopt_mode == "self_hosted" ? 1 : 0
   name  = "cloudwatch-logs"
   role  = aws_iam_role.cuopt_ec2[0].id
 
@@ -351,13 +360,13 @@ resource "aws_iam_role_policy" "cuopt_ec2_logs" {
 
 # SSM Session Manager for debugging
 resource "aws_iam_role_policy_attachment" "cuopt_ec2_ssm" {
-  count      = var.cuopt_self_hosted ? 1 : 0
+  count      = var.cuopt_mode == "self_hosted" ? 1 : 0
   role       = aws_iam_role.cuopt_ec2[0].name
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
 resource "aws_iam_instance_profile" "cuopt" {
-  count = var.cuopt_self_hosted ? 1 : 0
+  count = var.cuopt_mode == "self_hosted" ? 1 : 0
   name  = "${local.name_prefix}-cuopt-ec2"
   role  = aws_iam_role.cuopt_ec2[0].name
 }
@@ -365,7 +374,7 @@ resource "aws_iam_instance_profile" "cuopt" {
 # ── EC2 Instance ─────────────────────────────────────────
 
 resource "aws_instance" "cuopt" {
-  count                  = var.cuopt_self_hosted ? 1 : 0
+  count                  = var.cuopt_mode == "self_hosted" ? 1 : 0
   ami                    = data.aws_ami.gpu_al2[0].id
   instance_type          = "g5.2xlarge"
   subnet_id              = aws_subnet.private[0].id
@@ -394,7 +403,7 @@ resource "aws_instance" "cuopt" {
 #   cuopt.smartwaste.local → EC2 private IP
 
 resource "aws_service_discovery_instance" "cuopt" {
-  count       = var.cuopt_self_hosted ? 1 : 0
+  count       = var.cuopt_mode == "self_hosted" ? 1 : 0
   instance_id = aws_instance.cuopt[0].id
   service_id  = aws_service_discovery_service.cuopt[0].id
 
@@ -405,7 +414,7 @@ resource "aws_service_discovery_instance" "cuopt" {
 
 # Endpoint para el servicio central de SSM
 resource "aws_vpc_endpoint" "ssm" {
-  count               = var.cuopt_self_hosted ? 1 : 0
+  count               = var.cuopt_mode == "self_hosted" ? 1 : 0
   vpc_id              = aws_vpc.main.id
   service_name        = "com.amazonaws.${local.region}.ssm"
   vpc_endpoint_type   = "Interface"
@@ -416,7 +425,7 @@ resource "aws_vpc_endpoint" "ssm" {
 
 # Endpoint para los mensajes de SSM (necesario para Session Manager)
 resource "aws_vpc_endpoint" "ssmmessages" {
-  count               = var.cuopt_self_hosted ? 1 : 0
+  count               = var.cuopt_mode == "self_hosted" ? 1 : 0
   vpc_id              = aws_vpc.main.id
   service_name        = "com.amazonaws.${local.region}.ssmmessages"
   vpc_endpoint_type   = "Interface"
@@ -427,7 +436,7 @@ resource "aws_vpc_endpoint" "ssmmessages" {
 
 # Endpoint para interactuar con la EC2
 resource "aws_vpc_endpoint" "ec2messages" {
-  count               = var.cuopt_self_hosted ? 1 : 0
+  count               = var.cuopt_mode == "self_hosted" ? 1 : 0
   vpc_id              = aws_vpc.main.id
   service_name        = "com.amazonaws.${local.region}.ec2messages"
   vpc_endpoint_type   = "Interface"
@@ -614,6 +623,13 @@ resource "aws_ecs_task_definition" "osrm" {
       retries     = 3
       startPeriod = 90
     }
+
+    # Force new task definition revision when the image is rebuilt.
+    # The :latest tag is a static string, so TF won't detect a new push
+    # unless something else in container_definitions changes.
+    dockerLabels = {
+      "image_build_hash" = null_resource.osrm_image_push.id
+    }
   }])
 
   depends_on = [null_resource.osrm_image_push]
@@ -623,11 +639,12 @@ resource "aws_ecs_task_definition" "osrm" {
 # ── ECS Service: osrm-server ───────────────────────────────────────────────────
 
 resource "aws_ecs_service" "osrm" {
-  name            = "${local.name_prefix}-osrm"
-  cluster         = aws_ecs_cluster.main.id
-  task_definition = aws_ecs_task_definition.osrm.arn
-  desired_count   = 1
-  launch_type     = "FARGATE"
+  name                 = "${local.name_prefix}-osrm"
+  cluster              = aws_ecs_cluster.main.id
+  task_definition      = aws_ecs_task_definition.osrm.arn
+  desired_count        = 1
+  launch_type          = "FARGATE"
+  force_new_deployment = true
 
   network_configuration {
     subnets          = aws_subnet.private[*].id

@@ -89,7 +89,7 @@ smartwaste-mvd/
 
 1. **No real sensors** — fill levels are simulated. The simulator models realistic fill curves (time-of-day, day-of-week, zone density). When real sensors are installed, they publish to the same MQTT topics and the rest of the pipeline doesn't change.
 2. **No real truck GPS** — truck positions are simulated or manually set. In production, OBD-II devices would publish to IoT Core.
-3. **cuOpt requires GPU** — two deployment modes: NVIDIA API Catalog (cloud, free 5K requests/month) or self-hosted on EC2 g5.2xlarge (`terraform apply -var='cuopt_self_hosted=true'`). Fallback: Google OR-Tools (CPU-only, slower).
+3. **cuOpt requires GPU** — two deployment modes: NVIDIA API Catalog (cloud, free 5K requests/month) or self-hosted on EC2 g5.2xlarge (`terraform apply -var='cuopt_mode=self_hosted'`). Fallback: Google OR-Tools (CPU-only, slower).
 4. **OSRM data freshness** — OSM data for Uruguay is updated monthly. Street changes won't reflect until the next OSRM rebuild.
 5. **No real-time traffic** — OSRM uses static speed profiles. Could integrate traffic data later.
 
@@ -106,7 +106,7 @@ cd osrm && docker compose up
 cd terraform && terraform plan && terraform apply
 
 # Deploy with cuOpt self-hosted on EC2 GPU (g5.2xlarge)
-cd terraform && terraform apply -var='cuopt_self_hosted=true'
+cd terraform && terraform apply -var='cuopt_mode=self_hosted'
 
 # Run sensor simulator locally
 cd simulator && python simulator.py --circuit 101 --interval 60

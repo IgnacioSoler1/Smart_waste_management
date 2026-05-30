@@ -146,9 +146,10 @@ export function AnalyticsView({ analytics, loading }: Props) {
     return () => { cancelled = true }
   }, [selectedEffCircuit])
 
-  // Default to "all circuits" view when route_efficiency data arrives
+  // Default to "all circuits" view when route_efficiency data arrives.
+  // Use __all__ even if by_circuit is empty today — historical trends may still exist.
   useEffect(() => {
-    if (!selectedEffCircuit && analytics?.route_efficiency?.by_circuit?.length) {
+    if (!selectedEffCircuit && analytics?.route_efficiency) {
       setSelectedEffCircuit('__all__')
     }
   }, [analytics, selectedEffCircuit])
@@ -653,9 +654,12 @@ export function AnalyticsView({ analytics, loading }: Props) {
                     }}
                   >
                     <option value="__all__">Todas las rutas (promedio)</option>
-                    {re.by_circuit.map((c) => (
-                      <option key={c.circuit_id} value={c.circuit_id}>
-                        {c.circuit_id}
+                    {(re.by_circuit.length > 0
+                      ? re.by_circuit.map((c) => c.circuit_id)
+                      : [...new Set(effTrends.map((t) => t.circuit_id))].filter((id) => id !== '__all__').sort()
+                    ).map((cid) => (
+                      <option key={cid} value={cid}>
+                        {cid}
                       </option>
                     ))}
                   </select>

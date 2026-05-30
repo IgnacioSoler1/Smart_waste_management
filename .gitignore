@@ -73,5 +73,9 @@ firmware/certs/*.key
 firmware/provisioning/ca-keys/
 *.bin
 
+# ---- Performance test results ----
+cuopt-client/test-performance/results/
+!cuopt-client/test-performance/results/.gitkeep
+
 # ---- Claude Code agent memory (contains AWS account IDs) ----
 .claude/agent-memory/

@@ -480,12 +480,27 @@ class CuOptSolver:
         return response.json()
 
     def _call_self_hosted(self, payload: dict) -> dict:
-        """Llama al servidor cuOpt self-hosted. Maneja respuestas asíncronas con polling."""
+        """
+        Llama al servidor cuOpt self-hosted (25.12+).
+
+        La API de cuOpt self-hosted espera el payload FLAT (sin wrapper
+        "action"/"data"), y requiere el header CLIENT-VERSION.
+        Maneja respuestas asíncronas con polling en /cuopt/solution/{reqId}.
+        """
         url = f"{self._server_url}/cuopt/request"
         logger.info("cuOpt self-hosted: POST %s", url)
 
+        # cuOpt self-hosted (25.12+) espera el payload flat, sin el wrapper
+        # "action"/"data"/"client_version" que usa la API Catalog.
+        flat_payload = payload.get("data", payload)
+
+        headers = {"CLIENT-VERSION": "custom"}
+
         try:
-            response = self._session.post(url, json=payload, timeout=_CUOPT_TIMEOUT_SECS)
+            response = self._session.post(
+                url, json=flat_payload, headers=headers,
+                timeout=_CUOPT_TIMEOUT_SECS,
+            )
             response.raise_for_status()
             data = response.json()
 
@@ -494,26 +509,26 @@ class CuOptSolver:
                 req_id = data["reqId"]
                 result_url = f"{self._server_url}/cuopt/solution/{req_id}"
                 logger.info("cuOpt self-hosted: Esperando resultado en la GPU (reqId=%s)...", req_id)
-                
+
                 deadline = time.monotonic() + _CUOPT_TIMEOUT_SECS
                 while time.monotonic() < deadline:
                     time.sleep(_CUOPT_POLL_INTERVAL)
                     res = self._session.get(result_url, timeout=10)
                     res.raise_for_status()
                     res_data = res.json()
-                    
+
                     # Si el JSON de respuesta ya contiene la solución final
                     if "solver_response" in res_data or "response" in res_data:
                         return res_data
-                        
+
                     # Si el servidor indica que hubo un fallo explícito
                     if res_data.get("status") == "ERROR":
                         raise RuntimeError(f"Fallo interno en cuOpt Server: {res_data}")
-                
-                # Si pasaron los 120 segundos y no terminó
+
+                # Si pasaron los 280 segundos y no terminó
                 raise requests.exceptions.Timeout("Timeout esperando el resultado de la GPU.")
 
-            # Si por algún motivo devuelve la respuesta directamente (síncrono)
+            # Si devuelve la respuesta directamente (síncrono)
             return data
 
         except requests.exceptions.Timeout:
