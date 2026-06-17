@@ -1,0 +1,281 @@
+{
+  "generated_at": "2026-06-05T18:17:03.877644+00:00",
+  "data_range": {
+    "first_date": "2026-05-15",
+    "last_date": "2026-06-04",
+    "days_analyzed": 21,
+    "total_circuit_days": 1178
+  },
+  "table1_operational_performance": {
+    "_note": "Equivalent to paper Table 1 \u2014 now computed over full history",
+    "total_unique_circuits": 134,
+    "mean_circuits_per_day": 56.1,
+    "total_containers_monitored": 10937,
+    "mean_containers_per_circuit": 81.6,
+    "mean_containers_above_threshold": 64.6,
+    "mean_sequential_baseline_distance_km": 100.6,
+    "mean_optimized_route_distance_km": 48.0,
+    "mean_distance_reduction_pct": 50.1,
+    "median_distance_reduction_pct": 50.8,
+    "stddev_distance_reduction_pct": 17.0,
+    "mean_duration_reduction_pct": 53.1,
+    "mean_containers_skipped_abs": 8.2,
+    "mean_containers_skipped_pct": 11.3,
+    "total_distance_saved_km": 61949.9,
+    "total_baseline_km": 118459.4,
+    "total_optimized_km": 56509.5
+  },
+  "table2_by_shift": {
+    "_note": "Equivalent to paper Table 2 \u2014 per-shift breakdown",
+    "shifts": [
+      {
+        "shift": "afternoon",
+        "avg_circuits_per_day": 10.6,
+        "mean_distance_reduction_pct": 50.1,
+        "mean_containers_skipped_pct": 9.7
+      },
+      {
+        "shift": "morning",
+        "avg_circuits_per_day": 50.8,
+        "mean_distance_reduction_pct": 58.2,
+        "mean_containers_skipped_pct": 16.9
+      },
+      {
+        "shift": "night",
+        "avg_circuits_per_day": 51.3,
+        "mean_distance_reduction_pct": 42.9,
+        "mean_containers_skipped_pct": 6.5
+      }
+    ]
+  },
+  "paper_comparison": {
+    "_note": "Original paper values (5-day average) vs current results",
+    "mean_distance_reduction_pct": {
+      "paper_5d": 51.0,
+      "now": 50.1
+    },
+    "median_distance_reduction_pct": {
+      "paper_5d": 51.5,
+      "now": 50.8
+    },
+    "mean_baseline_distance_km": {
+      "paper_5d": 104.7,
+      "now": 100.6
+    },
+    "mean_optimized_distance_km": {
+      "paper_5d": 48.5,
+      "now": 48.0
+    },
+    "mean_containers_skipped_abs": {
+      "paper_5d": 9.3,
+      "now": 8.2
+    },
+    "mean_containers_skipped_pct": {
+      "paper_5d": 12.7,
+      "now": 11.3
+    },
+    "by_shift_morning_dist_reduction_pct": {
+      "paper_5d": 58.7,
+      "now": 58.2
+    },
+    "by_shift_afternoon_dist_reduction_pct": {
+      "paper_5d": 48.1,
+      "now": 50.1
+    },
+    "by_shift_night_dist_reduction_pct": {
+      "paper_5d": 43.8,
+      "now": 42.9
+    }
+  },
+  "daily_breakdown": [
+    {
+      "date": "2026-05-15",
+      "circuits_with_routes": 0,
+      "containers_reporting": 10937,
+      "avg_fill_level": 60.1,
+      "avg_distance_improvement_pct": 0.0,
+      "total_distance_saved_km": 0.0,
+      "total_stops_skipped": 0
+    },
+    {
+      "date": "2026-05-16",
+      "circuits_with_routes": 120,
+      "containers_reporting": 10937,
+      "avg_fill_level": 51.1,
+      "avg_distance_improvement_pct": 54.5,
+      "total_distance_saved_km": 7141.0,
+      "total_stops_skipped": 1106
+    },
+    {
+      "date": "2026-05-17",
+      "circuits_with_routes": 101,
+      "containers_reporting": 10937,
+      "avg_fill_level": 43.1,
+      "avg_distance_improvement_pct": 55.4,
+      "total_distance_saved_km": 5309.6,
+      "total_stops_skipped": 946
+    },
+    {
+      "date": "2026-05-18",
+      "circuits_with_routes": 118,
+      "containers_reporting": 10937,
+      "avg_fill_level": 57.5,
+      "avg_distance_improvement_pct": 44.9,
+      "total_distance_saved_km": 5791.7,
+      "total_stops_skipped": 922
+    },
+    {
+      "date": "2026-05-19",
+      "circuits_with_routes": 103,
+      "containers_reporting": 10937,
+      "avg_fill_level": 57.5,
+      "avg_distance_improvement_pct": 48.5,
+      "total_distance_saved_km": 5437.0,
+      "total_stops_skipped": 868
+    },
+    {
+      "date": "2026-05-20",
+      "circuits_with_routes": 128,
+      "containers_reporting": 10937,
+      "avg_fill_level": 57.5,
+      "avg_distance_improvement_pct": 50.0,
+      "total_distance_saved_km": 7070.4,
+      "total_stops_skipped": 1074
+    },
+    {
+      "date": "2026-05-21",
+      "circuits_with_routes": 0,
+      "containers_reporting": 10937,
+      "avg_fill_level": 57.5,
+      "avg_distance_improvement_pct": 0.0,
+      "total_distance_saved_km": 0.0,
+      "total_stops_skipped": 0
+    },
+    {
+      "date": "2026-05-22",
+      "circuits_with_routes": 0,
+      "containers_reporting": 10937,
+      "avg_fill_level": 57.6,
+      "avg_distance_improvement_pct": 0.0,
+      "total_distance_saved_km": 0.0,
+      "total_stops_skipped": 0
+    },
+    {
+      "date": "2026-05-23",
+      "circuits_with_routes": 0,
+      "containers_reporting": 10937,
+      "avg_fill_level": 51.2,
+      "avg_distance_improvement_pct": 0.0,
+      "total_distance_saved_km": 0.0,
+      "total_stops_skipped": 0
+    },
+    {
+      "date": "2026-05-24",
+      "circuits_with_routes": 0,
+      "containers_reporting": 10937,
+      "avg_fill_level": 43.2,
+      "avg_distance_improvement_pct": 0.0,
+      "total_distance_saved_km": 0.0,
+      "total_stops_skipped": 0
+    },
+    {
+      "date": "2026-05-25",
+      "circuits_with_routes": 0,
+      "containers_reporting": 10937,
+      "avg_fill_level": 57.5,
+      "avg_distance_improvement_pct": 0.0,
+      "total_distance_saved_km": 0.0,
+      "total_stops_skipped": 0
+    },
+    {
+      "date": "2026-05-26",
+      "circuits_with_routes": 0,
+      "containers_reporting": 10937,
+      "avg_fill_level": 57.6,
+      "avg_distance_improvement_pct": 0.0,
+      "total_distance_saved_km": 0.0,
+      "total_stops_skipped": 0
+    },
+    {
+      "date": "2026-05-27",
+      "circuits_with_routes": 0,
+      "containers_reporting": 10937,
+      "avg_fill_level": 57.5,
+      "avg_distance_improvement_pct": 0.0,
+      "total_distance_saved_km": 0.0,
+      "total_stops_skipped": 0
+    },
+    {
+      "date": "2026-05-28",
+      "circuits_with_routes": 0,
+      "containers_reporting": 10937,
+      "avg_fill_level": 57.5,
+      "avg_distance_improvement_pct": 0.0,
+      "total_distance_saved_km": 0.0,
+      "total_stops_skipped": 0
+    },
+    {
+      "date": "2026-05-29",
+      "circuits_with_routes": 0,
+      "containers_reporting": 10937,
+      "avg_fill_level": 57.6,
+      "avg_distance_improvement_pct": 0.0,
+      "total_distance_saved_km": 0.0,
+      "total_stops_skipped": 0
+    },
+    {
+      "date": "2026-05-30",
+      "circuits_with_routes": 46,
+      "containers_reporting": 10937,
+      "avg_fill_level": 51.3,
+      "avg_distance_improvement_pct": 43.1,
+      "total_distance_saved_km": 1808.0,
+      "total_stops_skipped": 216
+    },
+    {
+      "date": "2026-05-31",
+      "circuits_with_routes": 99,
+      "containers_reporting": 10937,
+      "avg_fill_level": 43.2,
+      "avg_distance_improvement_pct": 54.9,
+      "total_distance_saved_km": 5263.3,
+      "total_stops_skipped": 947
+    },
+    {
+      "date": "2026-06-01",
+      "circuits_with_routes": 109,
+      "containers_reporting": 10937,
+      "avg_fill_level": 57.7,
+      "avg_distance_improvement_pct": 49.2,
+      "total_distance_saved_km": 5524.4,
+      "total_stops_skipped": 799
+    },
+    {
+      "date": "2026-06-02",
+      "circuits_with_routes": 131,
+      "containers_reporting": 10937,
+      "avg_fill_level": 58.0,
+      "avg_distance_improvement_pct": 50.0,
+      "total_distance_saved_km": 7077.4,
+      "total_stops_skipped": 1076
+    },
+    {
+      "date": "2026-06-03",
+      "circuits_with_routes": 104,
+      "containers_reporting": 10937,
+      "avg_fill_level": 57.9,
+      "avg_distance_improvement_pct": 48.2,
+      "total_distance_saved_km": 5259.8,
+      "total_stops_skipped": 744
+    },
+    {
+      "date": "2026-06-04",
+      "circuits_with_routes": 119,
+      "containers_reporting": 10937,
+      "avg_fill_level": 57.9,
+      "avg_distance_improvement_pct": 49.4,
+      "total_distance_saved_km": 6267.4,
+      "total_stops_skipped": 999
+    }
+  ]
+}

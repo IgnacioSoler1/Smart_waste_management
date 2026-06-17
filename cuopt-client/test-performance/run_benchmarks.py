@@ -40,6 +40,9 @@ from config import (
     QUICK_CONCURRENCY_LEVELS,
     QUICK_PROBLEM_SIZES,
     QUICK_REPETITIONS,
+    QUICK_STRESS_CONCURRENCY_LEVELS,
+    QUICK_STRESS_PROBLEM_SIZE,
+    QUICK_STRESS_VEHICLE_COUNT,
     QUICK_VEHICLE_COUNTS,
     RAMP_STEP_DURATION_SECS,
     RAMP_STEPS,
@@ -78,11 +81,11 @@ def _estimate_requests(
         # Sequential: cada (size, vehicle) combo × repetitions
         seq = len(sizes) * len(vehicles) * repetitions
 
-        # Concurrent: tamaño fijo, cada nivel de concurrencia × repetitions
-        conc_levels = concurrency
+        # Concurrent: cada (size, vehicles) × cada nivel >1 × repetitions
+        conc_levels = [c for c in concurrency if c > 1]
         if mode == "api_catalog":
-            conc_levels = [min(c, 5) for c in concurrency]
-        conc = sum(conc_levels) * repetitions
+            conc_levels = [min(c, 5) for c in conc_levels]
+        conc = len(sizes) * len(vehicles) * sum(conc_levels) * repetitions
 
         # Ramp-up: solo self_hosted
         ramp = 0
@@ -130,6 +133,9 @@ def _run_mode(
     skip_ramp: bool,
     concurrency_problem_size: int,
     concurrency_vehicles: int,
+    stress_concurrency_levels: list[int] | None = None,
+    stress_problem_size: int | None = None,
+    stress_vehicles: int | None = None,
 ) -> list[RequestResult]:
     """Ejecuta todos los escenarios para un modo dado."""
     logger.info("=" * 60)
@@ -157,20 +163,21 @@ def _run_mode(
 
     # ── Concurrent tests ─────────────────────────────────────
     logger.info("--- Concurrent tests ---")
-    conc_key = (concurrency_problem_size, concurrency_vehicles)
-    if conc_key not in problems_by_key:
-        # Fallback: usar el problema más grande disponible
-        available = sorted(problems_by_key.keys())
-        conc_key = available[-1] if available else None
-
-    if conc_key:
-        conc_problem = problems_by_key[conc_key]
-        for level in concurrency:
-            results = runner.run_concurrent(conc_problem, level, repetitions=repetitions)
-            all_results.extend(results)
+    for size in sizes:
+        for veh in vehicles:
+            key = (size, veh)
+            if key not in problems_by_key:
+                continue
+            problem = problems_by_key[key]
+            for level in concurrency:
+                if level == 1:
+                    continue  # Ya cubierto por sequential
+                results = runner.run_concurrent(problem, level, repetitions=repetitions)
+                all_results.extend(results)
 
     # ── Ramp-up tests ────────────────────────────────────────
-    if not skip_ramp and mode == "self_hosted" and conc_key:
+    conc_key = (concurrency_problem_size, concurrency_vehicles)
+    if not skip_ramp and mode == "self_hosted" and conc_key in problems_by_key:
         logger.info("--- Ramp-up tests ---")
         ramp_problem = problems_by_key[conc_key]
         results = runner.run_ramp_up(
@@ -179,6 +186,35 @@ def _run_mode(
             step_duration_secs=RAMP_STEP_DURATION_SECS,
         )
         all_results.extend(results)
+
+    # ── High-concurrency stress tests ────────────────────────
+    # Solo se activan cuando se pasan stress_concurrency_levels (quick mode).
+    # Corren únicamente sobre el problema de stress_problem_size nodos para
+    # aislar el efecto de la concurrencia sin mezclar el tamaño del problema.
+    if stress_concurrency_levels and stress_problem_size is not None:
+        veh = stress_vehicles if stress_vehicles is not None else min(vehicles)
+        stress_key = (stress_problem_size, veh)
+        if stress_key not in problems_by_key:
+            logger.warning(
+                "Problema stress (%d nodos, %d vehículos) no encontrado, omitiendo.",
+                stress_problem_size,
+                veh,
+            )
+        else:
+            stress_problem = problems_by_key[stress_key]
+            logger.info(
+                "--- High-concurrency stress tests (size=%d, %d nodos) ---",
+                stress_problem_size,
+                stress_problem_size,
+            )
+            for level in stress_concurrency_levels:
+                results = runner.run_concurrent(
+                    stress_problem,
+                    level,
+                    repetitions=repetitions,
+                    bypass_limit=True,
+                )
+                all_results.extend(results)
 
     logger.info(
         "Modo %s completado: %d requests totales.",
@@ -270,11 +306,17 @@ def main() -> None:
         concurrency = QUICK_CONCURRENCY_LEVELS
         vehicles = QUICK_VEHICLE_COUNTS
         repetitions = QUICK_REPETITIONS
+        stress_concurrency_levels: list[int] = QUICK_STRESS_CONCURRENCY_LEVELS
+        stress_problem_size: int | None = QUICK_STRESS_PROBLEM_SIZE
+        stress_vehicles: int | None = QUICK_STRESS_VEHICLE_COUNT
     else:
         sizes = _parse_int_list(args.sizes) if args.sizes else PROBLEM_SIZES
         concurrency = _parse_int_list(args.concurrency) if args.concurrency else CONCURRENCY_LEVELS
         vehicles = _parse_int_list(args.vehicles) if args.vehicles else VEHICLE_COUNTS
         repetitions = args.repetitions or DEFAULT_REPETITIONS
+        stress_concurrency_levels = []
+        stress_problem_size = None
+        stress_vehicles = None
 
     modes = ["api_catalog", "self_hosted"] if args.mode == "both" else [args.mode]
     skip_ramp = args.quick or args.skip_ramp
@@ -297,6 +339,8 @@ def main() -> None:
     print(f"  Vehículos:     {vehicles}")
     print(f"  Repeticiones:  {repetitions}")
     print(f"  Skip ramp-up:  {skip_ramp}")
+    if stress_concurrency_levels:
+        print(f"  Stress test:   C={stress_concurrency_levels} @ {stress_problem_size} nodos (bypass límite API)")
     print()
     for mode, est in estimates.items():
         print(f"  Requests estimados ({mode}): ~{est}")
@@ -343,6 +387,13 @@ def main() -> None:
         seed = 42 + conc_size * 100 + conc_veh
         problems_by_key[(conc_size, conc_veh)] = generator.generate(conc_size, conc_veh, seed=seed)
 
+    # Asegurar que el problema de stress existe
+    if stress_problem_size is not None and stress_vehicles is not None:
+        stress_key = (stress_problem_size, stress_vehicles)
+        if stress_key not in problems_by_key:
+            seed = 42 + stress_problem_size * 100 + stress_vehicles
+            problems_by_key[stress_key] = generator.generate(stress_problem_size, stress_vehicles, seed=seed)
+
     logger.info("Generados %d problemas.", len(problems_by_key))
 
     # ── Ejecutar benchmarks ──────────────────────────────────
@@ -365,6 +416,9 @@ def main() -> None:
             skip_ramp=skip_ramp,
             concurrency_problem_size=conc_size,
             concurrency_vehicles=conc_veh,
+            stress_concurrency_levels=stress_concurrency_levels,
+            stress_problem_size=stress_problem_size,
+            stress_vehicles=stress_vehicles,
         )
         all_results.extend(results)
 

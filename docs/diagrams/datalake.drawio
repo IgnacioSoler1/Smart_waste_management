@@ -10,7 +10,7 @@
         <mxCell id="t2" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=14;fontColor=#546E7A;" value="&lt;font&gt;Bronze → Silver → Gold · Medallion Architecture · Kinesis · S3 · Glue · Athena&lt;/font&gt;" vertex="1">
           <mxGeometry height="22" width="900" x="250" y="44" as="geometry" />
         </mxCell>
-        <mxCell id="bg1" parent="1" style="text;html=1;align=center;verticalAlign=top;fillColor=#E8F5E9;strokeColor=#43A047;strokeWidth=2;dashed=1;fontColor=#2E7D32;fontSize=14;fontStyle=1;pointerEvents=0;" value="&lt;font&gt;Plano Operativo&lt;/font&gt;" vertex="1">
+        <mxCell id="bg1" parent="1" style="text;html=1;align=center;verticalAlign=top;fillColor=#E8F5E9;strokeColor=#43A047;strokeWidth=2;dashed=1;fontColor=#2E7D32;fontSize=14;fontStyle=1;pointerEvents=0;" value="&lt;font&gt;Operative Plane&lt;/font&gt;" vertex="1">
           <mxGeometry height="289" width="280" x="67" y="343" as="geometry" />
         </mxCell>
         <mxCell id="bg2" parent="1" style="text;html=1;align=center;verticalAlign=top;fillColor=#FBE9E7;strokeColor=#E64A19;strokeWidth=2;dashed=1;fontColor=#BF360C;fontSize=14;fontStyle=1;pointerEvents=0;" value="&lt;font&gt;S3 Data Lake · Bronze&lt;/font&gt;" vertex="1">

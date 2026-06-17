@@ -368,11 +368,8 @@ run_tests() {
 }
 
 run_and_teardown() {
-    # Capturar argumentos extra para run_tests
-    local extra_args=("${@:1}")
-
     launch
-    run_tests "${extra_args[@]}" || true
+    run_tests "$@" || true
     teardown
 }
 

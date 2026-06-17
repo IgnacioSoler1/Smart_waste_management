@@ -22,6 +22,7 @@ from config import (
     CONTAINER_CAPACITY_LITERS,
     DEPOT_LAT,
     DEPOT_LON,
+    URBAN_SPEED_MS,
     VEHICLE_CAPACITY_KG,
 )
 
@@ -151,11 +152,18 @@ class ProblemGenerator:
     def _build_cost_matrix(
         self, coords: list[tuple[float, float]]
     ) -> list[list[int]]:
-        """Construye matriz N x N de distancias haversine en metros."""
+        """
+        Construye matriz N x N de tiempos de viaje en segundos.
+
+        Usa haversine para distancia en metros, luego convierte a segundos
+        con velocidad urbana promedio (30 km/h). Esto hace que la cost_matrix
+        sea coherente con la ventana de tiempo de vrp_solver._build_payload()
+        (time_limit * 10_000 segundos).
+        """
         n = len(coords)
         return [
             [
-                self._haversine_m(coords[i][0], coords[i][1], coords[j][0], coords[j][1])
+                int(self._haversine_m(coords[i][0], coords[i][1], coords[j][0], coords[j][1]) / URBAN_SPEED_MS)
                 for j in range(n)
             ]
             for i in range(n)
@@ -177,8 +185,9 @@ class ProblemGenerator:
     def _adjust_capacities(
         demands: list[float], num_vehicles: int
     ) -> list[float]:
-        """Ajusta capacidades para garantizar feasibility (margen 20%)."""
+        """Ajusta capacidades para garantizar feasibility (margen 50%)."""
         total_demand = sum(demands)
-        min_capacity_per_vehicle = (total_demand * 1.2) / num_vehicles
+        # Margen generoso (50%) para que cuOpt siempre encuentre solución
+        min_capacity_per_vehicle = (total_demand * 1.5) / num_vehicles
         capacity = max(VEHICLE_CAPACITY_KG, min_capacity_per_vehicle)
         return [capacity] * num_vehicles

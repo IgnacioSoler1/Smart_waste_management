@@ -1,6 +1,6 @@
 <mxfile host="app.diagrams.net">
   <diagram name="Frontend y APIs" id="frontend-apis">
-    <mxGraphModel dx="918" dy="631" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="800" math="0" shadow="0" adaptiveColors="auto">
+    <mxGraphModel dx="876" dy="603" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="800" math="0" shadow="0" adaptiveColors="auto">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -10,7 +10,7 @@
         <mxCell id="lane_rest" parent="1" style="swimlane;startSize=35;fillColor=#E8F5E9;strokeColor=#2E7D32;fontStyle=1;fontSize=13;fontColor=#1B5E20;" value="REST API — Dashboard de Operaciones" vertex="1">
           <mxGeometry height="270" width="1170" x="30" y="80" as="geometry" />
         </mxCell>
-        <mxCell id="dash" parent="lane_rest" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#232F3E;strokeColor=#555;fontColor=#ffffff;fontSize=11;" value="Dashboard Ops&#xa;React + Leaflet + Recharts&#xa;(despachadores / supervisores)" vertex="1">
+        <mxCell id="dash" parent="lane_rest" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#232F3E;strokeColor=#555;fontColor=#ffffff;fontSize=11;" value="Dashboard Ops&lt;br&gt;React + Leaflet + Recharts&lt;br&gt;(dispatchers / supervisors)" vertex="1">
           <mxGeometry height="80" width="170" x="20" y="70" as="geometry" />
         </mxCell>
         <mxCell id="rest_gw" parent="lane_rest" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.api_gateway;fillColor=#CC2264;strokeColor=none;fontColor=#232F3E;fontSize=11;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;" value="API Gateway REST&#xa;https://&lt;API_ID&gt;...&#xa;/dev" vertex="1">
@@ -43,9 +43,9 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="lane_ws" parent="1" style="swimlane;startSize=35;fillColor=#E3F2FD;strokeColor=#1565C0;fontStyle=1;fontSize=13;fontColor=#0D47A1;" value="WebSocket API — App del Conductor" vertex="1">
-          <mxGeometry height="390" width="1170" x="30" y="370" as="geometry" />
+          <mxGeometry height="390" width="1170" x="31" y="370" as="geometry" />
         </mxCell>
-        <mxCell id="driver" parent="lane_ws" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#232F3E;strokeColor=#555;fontColor=#ffffff;fontSize=11;" value="Driver App&#xa;React PWA&#xa;(conductor en móvil)" vertex="1">
+        <mxCell id="driver" parent="lane_ws" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#232F3E;strokeColor=#555;fontColor=#ffffff;fontSize=11;" value="Driver App&lt;br&gt;React PWA&lt;br&gt;(driver in app mobile)" vertex="1">
           <mxGeometry height="80" width="170" x="30" y="100" as="geometry" />
         </mxCell>
         <mxCell id="ws_gw" parent="lane_ws" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.api_gateway;fillColor=#CC2264;strokeColor=none;fontColor=#232F3E;fontSize=13;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;" value="API Gateway WS&#xa;wss://&lt;WS_API_ID&gt;...&#xa;/dev" vertex="1">

@@ -161,13 +161,15 @@ class BenchmarkRunner:
         problem: VRPProblem,
         concurrency: int,
         repetitions: int = 1,
+        bypass_limit: bool = False,
     ) -> list[RequestResult]:
         """
         Envía `concurrency` requests idénticos simultáneamente.
-        Para api_catalog, limita a API_CATALOG_MAX_CONCURRENT.
+        Para api_catalog, limita a API_CATALOG_MAX_CONCURRENT salvo que
+        bypass_limit=True (usado en stress tests de alta concurrencia).
         """
         effective = concurrency
-        if self._mode == "api_catalog":
+        if self._mode == "api_catalog" and not bypass_limit:
             effective = min(concurrency, API_CATALOG_MAX_CONCURRENT)
             if effective < concurrency:
                 logger.warning(
@@ -175,6 +177,11 @@ class BenchmarkRunner:
                     concurrency,
                     effective,
                 )
+        elif self._mode == "api_catalog" and bypass_limit:
+            logger.warning(
+                "Stress test: bypass de límite api_catalog, C=%d (monitorear rate limits)",
+                concurrency,
+            )
 
         all_results: list[RequestResult] = []
 
