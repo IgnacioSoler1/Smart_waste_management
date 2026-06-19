@@ -34,6 +34,7 @@ import logging
 import math
 import os
 import uuid
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Any
@@ -70,6 +71,23 @@ _MIN_CONTAINERS = 5
 
 # Capacidad de camión por defecto (kg). Los camiones de MVD llevan ~25 t.
 _DEFAULT_TRUCK_CAPACITY_KG = 25_000.0
+
+# ─────────────────────────────────────────────────────────
+# Consolidated multi-circuit solve (Vector 5.1 de docs/cuopt.md)
+# ─────────────────────────────────────────────────────────
+
+# Tamaño máximo de matriz OSRM por llamada (locations).
+# El cliente OSRM tiene un cap de 5000 (osrm_client._MAX_TABLE_SIZE),
+# y el server ECS soporta hasta 10000. El verdadero binding es cuOpt:
+#   - cuOpt cloud API:  ~1,000 nodos por solve (límite documentado)
+#   - cuOpt self-hosted: ~10,000+ nodos
+# Default 1000 para aprovechar al máximo el cloud sin pasar el límite;
+# subir a 5000+ requiere cuopt_mode=self_hosted.
+_MAX_LOCATIONS_PER_GROUP = int(os.environ.get("MAX_LOCATIONS_PER_GROUP", "1000"))
+
+# Cantidad mínima de circuitos en un grupo para activar la consolidación.
+# Con 1 circuito hay que caer al path single-circuit original (no hay nada que consolidar).
+_MIN_CIRCUITS_FOR_CONSOLIDATION = int(os.environ.get("MIN_CIRCUITS_FOR_CONSOLIDATION", "2"))
 
 # Depósitos de Montevideo (lat, lon)
 _DEPOTS: dict[str, tuple[float, float]] = {
@@ -318,6 +336,8 @@ def _save_route(
     vrp_result: dict,
     bearings: list[tuple[int, int] | None] | None = None,
     baseline: dict | None = None,
+    group_id: str | None = None,
+    origin_circuit_ids: list[str] | None = None,
 ) -> tuple[str, float, float]:
     """
     Persiste la ruta en DynamoDB.
@@ -406,6 +426,12 @@ def _save_route(
         "depot_lat":       Decimal(str(depot_coords[0])),
         "depot_lon":       Decimal(str(depot_coords[1])),
     }
+    if group_id is not None:
+        item["group_id"] = group_id
+    if origin_circuit_ids:
+        # Set de circuitos originales que aportaron stops a esta ruta
+        # (en modo single-circuit = [circuit_id]; en modo consolidado puede ser >1).
+        item["origin_circuit_ids"] = sorted(set(origin_circuit_ids))
     if route_geometry is not None:
         item["route_geometry"] = route_geometry
 
@@ -434,6 +460,9 @@ def _save_route(
             "circuit_id":               circuit_id,
             "route_id":                 route_id,
             "truck_id":                 truck_id,
+            "group_id":                 group_id or "",
+            "origin_circuit_ids":       sorted(set(origin_circuit_ids)) if origin_circuit_ids else [circuit_id],
+            "consolidated":             bool(group_id),
             "created_at":               now_iso,
             "baseline_distance_m":      round(baseline["baseline_distance_m"])   if baseline else 0,
             "total_distance_m":         round(total_distance_m),
@@ -473,6 +502,192 @@ def _save_route(
             logger.warning("No se pudo actualizar active_route_id en truck %s: %s", truck_id, exc)
 
     return route_id, total_duration_s, total_distance_m
+
+
+# ─────────────────────────────────────────────────────────
+# Helpers: grouping multi-circuito (consolidation)
+# ─────────────────────────────────────────────────────────
+
+@dataclass
+class CircuitGroup:
+    """
+    Conjunto de circuitos que comparten depósito y se resuelven en un único
+    solve consolidado de cuOpt/OR-Tools. Cuando el grupo tiene un solo circuito
+    se cae al path single-circuit original (sin overhead de consolidación).
+    """
+    group_id: str
+    depot_id: str
+    circuit_ids: list[str] = field(default_factory=list)
+    total_containers: int = 0
+    total_mandatory: int = 0
+
+
+def _prefetch_circuit_data(circuit_ids: list[str]) -> dict[str, dict]:
+    """
+    Para cada circuit_id, hace una query a containers + trucks y guarda los
+    resultados en memoria. Esto permite agrupar antes de optimizar sin
+    duplicar queries cuando un grupo cae al path single-circuit.
+
+    Returns:
+        dict mapeando circuit_id → {
+            "containers": list[dict],
+            "trucks":     list[dict],
+            "depot_id":   str,
+            "n_total":    int,           # contenedores con fill > 20%
+            "n_mandatory": int,          # contenedores con fill > 60%
+        }
+    """
+    data: dict[str, dict] = {}
+    for cid in circuit_ids:
+        try:
+            containers = _get_containers(cid)
+        except Exception as exc:
+            logger.warning("[circuit=%s] Prefetch containers fallo: %s", cid, exc)
+            containers = []
+        try:
+            trucks = _get_idle_trucks(cid)
+        except Exception as exc:
+            logger.warning("[circuit=%s] Prefetch trucks fallo: %s", cid, exc)
+            trucks = []
+
+        depot_id = str(containers[0].get("depot_id", _DEFAULT_DEPOT_ID)) if containers else _DEFAULT_DEPOT_ID
+        n_mandatory = sum(1 for c in containers if float(c.get("fill_level", 0)) > 60)
+
+        data[cid] = {
+            "containers":  containers,
+            "trucks":      trucks,
+            "depot_id":    depot_id,
+            "n_total":     len(containers),
+            "n_mandatory": n_mandatory,
+        }
+    return data
+
+
+def _group_circuits_by_depot_shift(
+    circuit_data: dict[str, dict],
+    shift: str,
+    max_locations_per_group: int = _MAX_LOCATIONS_PER_GROUP,
+) -> list[CircuitGroup]:
+    """
+    Agrupa circuitos por depósito (felipe_cardoso vs ruta_102) en bins que
+    respetan el límite de OSRM (≤500 locations). Greedy bin-packing: ordena
+    los circuitos por tamaño descendente y los va llenando.
+
+    Reserva 2 slots para los nodos de depósito (start + end), así que el cap
+    efectivo de contenedores por grupo es max_locations_per_group - 2.
+    """
+    # Reservar 2 para depot start + end
+    container_cap = max_locations_per_group - 2
+
+    # Bin por depósito
+    by_depot: dict[str, list[tuple[str, int]]] = {}
+    for cid, d in circuit_data.items():
+        by_depot.setdefault(d["depot_id"], []).append((cid, d["n_total"]))
+
+    groups: list[CircuitGroup] = []
+    for depot_id, circuits in by_depot.items():
+        # Greedy: ordenar por tamaño descendente
+        circuits_sorted = sorted(circuits, key=lambda x: -x[1])
+
+        current = CircuitGroup(
+            group_id=f"{shift}-{depot_id}-0",
+            depot_id=depot_id,
+        )
+        group_idx = 0
+
+        for cid, n in circuits_sorted:
+            # Un circuito individual que supera el cap: lo dejamos solo en su grupo
+            # (caerá al fallback single-circuit, lo cual respeta su propio tamaño).
+            if n > container_cap:
+                if current.circuit_ids:
+                    groups.append(current)
+                    group_idx += 1
+                solo = CircuitGroup(
+                    group_id=f"{shift}-{depot_id}-{group_idx}",
+                    depot_id=depot_id,
+                )
+                solo.circuit_ids.append(cid)
+                solo.total_containers = n
+                solo.total_mandatory = circuit_data[cid]["n_mandatory"]
+                groups.append(solo)
+                group_idx += 1
+                current = CircuitGroup(
+                    group_id=f"{shift}-{depot_id}-{group_idx}",
+                    depot_id=depot_id,
+                )
+                continue
+
+            # ¿Cabe en el grupo actual?
+            if current.total_containers + n > container_cap and current.circuit_ids:
+                # Cerrar grupo actual, abrir uno nuevo
+                groups.append(current)
+                group_idx += 1
+                current = CircuitGroup(
+                    group_id=f"{shift}-{depot_id}-{group_idx}",
+                    depot_id=depot_id,
+                )
+
+            current.circuit_ids.append(cid)
+            current.total_containers += n
+            current.total_mandatory += circuit_data[cid]["n_mandatory"]
+
+        if current.circuit_ids:
+            groups.append(current)
+
+    logger.info(
+        "Grouping %s: %d circuits → %d groups (sizes: %s)",
+        shift, len(circuit_data), len(groups),
+        [(g.group_id, len(g.circuit_ids), g.total_containers) for g in groups],
+    )
+    return groups
+
+
+def _baseline_for_origin_circuit(
+    containers_global: list[dict],
+    origin_circuit_id: str,
+    durations_matrix: list[list[int]],
+    distances_matrix: list[list[float]],
+    depot_start_idx: int,
+    depot_end_idx: int,
+) -> dict:
+    """
+    Variante de _compute_baseline_csv_order para el modo consolidado.
+
+    En el problema consolidado los containers de varios circuitos están en
+    el mismo array (containers_global). Calculamos el baseline (ruta secuencial
+    CSV) solo para los containers de un origin_circuit_id puntual, usando los
+    índices globales en la matriz consolidada para que sea comparable con la
+    ruta optimizada que también referencia esa misma matriz.
+    """
+    # Filtrar containers de este circuito + recordar índice global (+1 por depot)
+    filtered = [
+        (global_idx + 1, c)  # +1 porque depot_start ocupa idx 0
+        for global_idx, c in enumerate(containers_global)
+        if str(c.get("circuit_id", "")) == origin_circuit_id
+    ]
+    if not filtered:
+        return {
+            "baseline_distance_m": 0.0,
+            "baseline_duration_s": 0.0,
+            "baseline_stops": 0,
+        }
+
+    # Ordenar por csv_sequence
+    filtered.sort(key=lambda x: int(x[1].get("csv_sequence", 0)))
+
+    tour = [depot_start_idx] + [idx for idx, _ in filtered] + [depot_end_idx]
+
+    total_duration_s = sum(
+        durations_matrix[tour[i]][tour[i + 1]] for i in range(len(tour) - 1)
+    )
+    total_distance_m = sum(
+        distances_matrix[tour[i]][tour[i + 1]] for i in range(len(tour) - 1)
+    )
+    return {
+        "baseline_distance_m": total_distance_m,
+        "baseline_duration_s": total_duration_s,
+        "baseline_stops": len(filtered),
+    }
 
 
 # ─────────────────────────────────────────────────────────
@@ -663,12 +878,257 @@ def _optimize_circuit(circuit_id: str) -> dict:
 
 
 # ─────────────────────────────────────────────────────────
+# Optimización consolidada de un grupo de circuitos
+# ─────────────────────────────────────────────────────────
+
+def _optimize_circuit_group(
+    group: CircuitGroup,
+    circuit_data: dict[str, dict],
+) -> list[dict]:
+    """
+    Resuelve un único VRP consolidado para todos los circuitos del grupo y
+    persiste una ruta por camión. Devuelve un resumen por origin circuit
+    (compatible con el formato que produce `_optimize_circuit`).
+
+    Diferencias clave vs. `_optimize_circuit`:
+      - Concatena contenedores de todos los origin circuits del grupo.
+      - Pool compartido de camiones (todos los idle trucks del grupo).
+      - Una sola llamada a OSRM, un solo solve.
+      - Baseline calculado por origin circuit usando la matriz consolidada
+        (para que `distance_improvement_pct` siga siendo comparable con el
+        baseline secuencial CSV del paper).
+      - Cada ruta se atribuye al `dominant_circuit_id` (mayoría de stops).
+      - Notificación WebSocket fan-out a TODOS los origin circuits que
+        aportaron stops a la ruta (no solo al dominante).
+    """
+    prefix = f"[group={group.group_id}]"
+
+    # ── a. Concatenar contenedores + pool trucks ────────────
+    containers_global: list[dict] = []
+    truck_dicts: list[dict] = []
+    for cid in group.circuit_ids:
+        d = circuit_data[cid]
+        containers_global.extend(d["containers"])
+        truck_dicts.extend(d["trucks"])
+
+    if group.total_mandatory < _MIN_CONTAINERS:
+        logger.info("%s Saltando — %d obligatorios totales < mínimo %d",
+                    prefix, group.total_mandatory, _MIN_CONTAINERS)
+        return [{
+            "circuit_id": cid,
+            "group_id":   group.group_id,
+            "status":     "skipped",
+            "reason":     f"group_total_mandatory_<_{_MIN_CONTAINERS}",
+            "containers": circuit_data[cid]["n_total"],
+        } for cid in group.circuit_ids]
+
+    # ── b. Flota agrupada ──────────────────────────────────
+    if truck_dicts:
+        num_vehicles = len(truck_dicts)
+        capacities   = [float(t.get("capacity_kg", _DEFAULT_TRUCK_CAPACITY_KG)) for t in truck_dicts]
+        truck_ids    = [t["truck_id"] for t in truck_dicts]
+    else:
+        # Sin trucks reales: estimar virtual según demanda total
+        total_demand = sum(
+            estimate_demand_kg(float(c.get("fill_level", 50)), float(c.get("capacity_liters", 2400)))
+            for c in containers_global
+        )
+        num_vehicles = max(1, math.ceil(total_demand / _DEFAULT_TRUCK_CAPACITY_KG))
+        capacities   = [_DEFAULT_TRUCK_CAPACITY_KG] * num_vehicles
+        truck_ids    = [f"virtual-{group.group_id}-{v}" for v in range(num_vehicles)]
+
+    logger.info("%s %d circuitos, %d contenedores, %d vehículo(s) pooled",
+                prefix, len(group.circuit_ids), len(containers_global), num_vehicles)
+
+    # ── c. Depot y locations ───────────────────────────────
+    depot_coords = _DEPOTS.get(group.depot_id, _DEPOTS[_DEFAULT_DEPOT_ID])
+    locations, demands, prizes, depot_start_idx, depot_end_idx = _build_problem(
+        containers_global, depot_coords
+    )
+
+    # ── d. OSRM — bearings + matriz ────────────────────────
+    depot_indices = {depot_start_idx, depot_end_idx}
+    try:
+        bearings = _osrm.get_road_bearings(locations, depot_indices=depot_indices)
+    except Exception as exc:
+        logger.warning("%s Bearings fallo, continuando sin: %s", prefix, exc)
+        bearings = None
+
+    try:
+        osrm_result = _osrm.get_distance_matrix(locations, bearings=bearings)
+    except (OSRMError, Exception) as exc:
+        logger.error("%s OSRM error: %s", prefix, exc, exc_info=True)
+        return [{"circuit_id": cid, "group_id": group.group_id, "status": "error",
+                 "error": f"osrm: {exc}"} for cid in group.circuit_ids]
+
+    cost_matrix = [[int(d) for d in row] for row in osrm_result["durations"]]
+
+    # ── e. Baseline por origin circuit ──────────────────────
+    baselines_by_circuit = {
+        cid: _baseline_for_origin_circuit(
+            containers_global, cid, cost_matrix, osrm_result["distances"],
+            depot_start_idx, depot_end_idx,
+        )
+        for cid in group.circuit_ids
+    }
+    for cid, bl in baselines_by_circuit.items():
+        logger.info(
+            "%s Baseline %s: %.1f km, %.1f min, %d paradas",
+            prefix, cid,
+            bl["baseline_distance_m"] / 1000,
+            bl["baseline_duration_s"] / 60,
+            bl["baseline_stops"],
+        )
+
+    # ── f. VRP solver (una sola llamada) ────────────────────
+    try:
+        solver = _make_solver()
+        vrp_result = solver.solve_vrp(
+            cost_matrix     = cost_matrix,
+            num_vehicles    = num_vehicles,
+            demands         = demands,
+            capacities      = capacities,
+            depot_start_idx = depot_start_idx,
+            depot_end_idx   = depot_end_idx,
+            time_limit      = 5,
+            prizes          = prizes,
+        )
+    except Exception as exc:
+        logger.error("%s Solver error: %s", prefix, exc, exc_info=True)
+        return [{"circuit_id": cid, "group_id": group.group_id, "status": "error",
+                 "error": f"solver: {exc}"} for cid in group.circuit_ids]
+
+    if not vrp_result["routes"]:
+        logger.warning("%s Sin solución VRP: solver_status=%s",
+                       prefix, vrp_result["status"])
+        return [{
+            "circuit_id":    cid,
+            "group_id":      group.group_id,
+            "status":        "no_solution",
+            "solver_status": vrp_result["status"],
+            "containers":    circuit_data[cid]["n_total"],
+        } for cid in group.circuit_ids]
+
+    # ── g. Supersede por cada origin circuit ────────────────
+    for cid in group.circuit_ids:
+        try:
+            _supersede_routes(cid)
+        except Exception as exc:
+            logger.warning("%s supersede %s fallo: %s", prefix, cid, exc)
+
+    # ── h. Persistir rutas (atribución por dominante) ───────
+    saved: list[dict] = []
+    n_nodes = len(containers_global) + 2  # depot_start + containers + depot_end
+
+    for v_offset, (_, route_indices) in enumerate(sorted(vrp_result["routes"].items())):
+        truck_id = truck_ids[min(v_offset, len(truck_ids) - 1)]
+
+        # Stops con origin_circuit_id (excluyendo depósitos)
+        depot_set = {depot_start_idx, depot_end_idx}
+        origin_ids_in_route: list[str] = []
+        for node_idx in route_indices:
+            if node_idx in depot_set:
+                continue
+            c = containers_global[node_idx - 1]
+            origin_ids_in_route.append(str(c.get("circuit_id", "")))
+
+        if not origin_ids_in_route:
+            continue  # ruta vacía (solo depósitos)
+
+        # Dominante = majority vote
+        from collections import Counter
+        votes = Counter(origin_ids_in_route)
+        dominant_circuit_id, _dom_count = votes.most_common(1)[0]
+        distinct_origins = sorted(set(origin_ids_in_route))
+
+        baseline_for_route = baselines_by_circuit.get(dominant_circuit_id)
+
+        try:
+            route_id, dur_s, dist_m = _save_route(
+                truck_id           = truck_id,
+                circuit_id         = dominant_circuit_id,
+                route_node_indices = route_indices,
+                containers         = containers_global,
+                depot_coords       = depot_coords,
+                durations_matrix   = cost_matrix,
+                distances_matrix   = osrm_result["distances"],
+                vrp_result         = vrp_result,
+                bearings           = bearings,
+                baseline           = baseline_for_route,
+                group_id           = group.group_id,
+                origin_circuit_ids = distinct_origins,
+            )
+        except Exception as exc:
+            logger.error("%s Error guardando ruta truck=%s: %s",
+                         prefix, truck_id, exc, exc_info=True)
+            continue
+
+        stops_count = len([i for i in route_indices if i not in depot_set])
+        route_summary = {
+            "route_id":           route_id,
+            "truck_id":           truck_id,
+            "stops":              stops_count,
+            "duration_s":         round(dur_s),
+            "distance_m":         round(dist_m),
+            "dominant_circuit":   dominant_circuit_id,
+            "origin_circuit_ids": distinct_origins,
+        }
+        saved.append(route_summary)
+        logger.info(
+            "%s Ruta guardada: route_id=%s truck=%s paradas=%d dist=%.1f km dur=%.1f min dom=%s origins=%s",
+            prefix, route_id, truck_id, stops_count,
+            dist_m / 1000, dur_s / 60, dominant_circuit_id, distinct_origins,
+        )
+
+        # WebSocket fan-out a TODOS los origin circuits afectados
+        try:
+            from ws_notifier import notify_drivers
+            for cid in distinct_origins:
+                ws_stats = notify_drivers(circuit_id=cid, route_summary=route_summary)
+                if ws_stats["sent"] > 0:
+                    logger.info(
+                        "%s WS notif circuit=%s: %d conductor(es)",
+                        prefix, cid, ws_stats["sent"],
+                    )
+        except Exception as ws_exc:
+            logger.warning("%s ws_notifier error: %s", prefix, ws_exc)
+
+    # ── i. Resumen por origin circuit ───────────────────────
+    # Una entrada por circuit_id; agrupa las rutas que terminaron atribuidas
+    # a cada uno (puede ser 0 si todos los containers del circuito fueron
+    # absorbidos por rutas dominadas por otros circuitos del grupo).
+    results: list[dict] = []
+    for cid in group.circuit_ids:
+        routes_for_cid = [r for r in saved if r["dominant_circuit"] == cid]
+        results.append({
+            "circuit_id":    cid,
+            "group_id":      group.group_id,
+            "status":        "optimized",
+            "solver":        vrp_result["solver"],
+            "solver_status": vrp_result["status"],
+            "containers":    circuit_data[cid]["n_total"],
+            "routes":        routes_for_cid,
+            "consolidated":  True,
+            "group_size":    len(group.circuit_ids),
+        })
+    return results
+
+
+# ─────────────────────────────────────────────────────────
 # Handler principal
 # ─────────────────────────────────────────────────────────
 
 def lambda_handler(event: dict, context) -> dict:
     """
     Entry point de la Lambda.
+
+    Comportamiento:
+      - `{"circuit_id": "..."}`  → optimiza solo ese circuito (path single-circuit,
+        no se intenta consolidar).
+      - `{"shift": "morning"}` o `{}` → toma todos los circuitos activos del
+        turno y los agrupa por depósito antes de optimizar. Grupos con un solo
+        circuito caen al path single-circuit; grupos con ≥2 circuitos se
+        resuelven con un único solve consolidado (cuOpt/OR-Tools).
 
     No relanza excepciones para que EventBridge no genere dead-letter events
     por errores de circuitos individuales.
@@ -679,35 +1139,53 @@ def lambda_handler(event: dict, context) -> dict:
     try:
         circuit_id = event.get("circuit_id")
 
+        # ── Path 1: override single-circuit explícito ─────────
         if circuit_id:
-            circuits = [str(circuit_id)]
+            results = [_optimize_circuit(str(circuit_id))]
+        # ── Path 2: shift-based con consolidación ─────────────
         else:
-            shift    = event.get("shift") or _current_shift()
+            shift = event.get("shift") or _current_shift()
             logger.info("[%s] Turno: %s", request_id, shift)
-            circuits = _get_circuits_for_shift(shift)
+            circuit_ids = _get_circuits_for_shift(shift)
 
-        if not circuits:
-            logger.info("[%s] Sin circuitos activos para optimizar", request_id)
-            return {"statusCode": 200, "message": "no_active_circuits", "results": []}
+            if not circuit_ids:
+                logger.info("[%s] Sin circuitos activos para optimizar", request_id)
+                return {"statusCode": 200, "message": "no_active_circuits", "results": []}
 
-        results = [_optimize_circuit(cid) for cid in circuits]
+            # Prefetch containers + trucks → necesario para agrupar por depot
+            # y para conocer el tamaño exacto de cada circuito antes del bin-packing.
+            circuit_data = _prefetch_circuit_data(circuit_ids)
+            groups = _group_circuits_by_depot_shift(circuit_data, shift)
+
+            results = []
+            for group in groups:
+                if len(group.circuit_ids) < _MIN_CIRCUITS_FOR_CONSOLIDATION:
+                    # Fallback single-circuit (1 circuito en el grupo o el threshold lo fuerza).
+                    # Usa _optimize_circuit que re-fetcha datos; la duplicación es aceptable
+                    # porque ocurre en pocos casos y simplifica el código.
+                    for cid in group.circuit_ids:
+                        results.append(_optimize_circuit(cid))
+                else:
+                    results.extend(_optimize_circuit_group(group, circuit_data))
 
         n_optimized = sum(1 for r in results if r.get("status") == "optimized")
         n_skipped   = sum(1 for r in results if r.get("status") == "skipped")
         n_errors    = sum(1 for r in results if r.get("status") == "error")
+        n_consolidated = sum(1 for r in results if r.get("consolidated"))
 
         logger.info(
-            "[%s] Completado: %d circuitos — %d optimizados, %d saltados, %d errores",
-            request_id, len(results), n_optimized, n_skipped, n_errors,
+            "[%s] Completado: %d circuitos — %d optimizados (%d consolidados), %d saltados, %d errores",
+            request_id, len(results), n_optimized, n_consolidated, n_skipped, n_errors,
         )
 
         return {
-            "statusCode": 200,
-            "circuits":   len(results),
-            "optimized":  n_optimized,
-            "skipped":    n_skipped,
-            "errors":     n_errors,
-            "results":    results,
+            "statusCode":   200,
+            "circuits":     len(results),
+            "optimized":    n_optimized,
+            "consolidated": n_consolidated,
+            "skipped":      n_skipped,
+            "errors":       n_errors,
+            "results":      results,
         }
 
     except Exception as exc:

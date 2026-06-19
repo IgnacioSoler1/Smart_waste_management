@@ -1,5 +1,5 @@
 """
-experiment_inflection.py — SmartWaste MVD
+benchmark_inflection.py — SmartWaste MVD
 
 Investigación: ¿en qué punto cuOpt empieza a superar significativamente a OR-Tools?
 

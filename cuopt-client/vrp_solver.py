@@ -131,6 +131,9 @@ class ORToolsSolver:
         depot_end_idx: int = 0,
         time_limit: int = 5,
         prizes: list[float] | None = None,
+        time_windows: list[tuple[int, int]] | None = None,
+        service_times: list[int] | None = None,
+        vehicle_time_windows: list[tuple[int, int]] | None = None,
     ) -> dict[str, Any]:
         try:
             from ortools.constraint_solver import pywrapcp, routing_enums_pb2
@@ -162,6 +165,54 @@ class ORToolsSolver:
         routing.AddDimensionWithVehicleCapacity(
             demand_cb, 0, cap_int, True, "Capacity",
         )
+
+        # ── Time windows (opcional, backward-compat) ──────────
+        # Si se especifican, agregamos la dimensión "Time" con las ventanas
+        # por nodo. service_times[i] = tiempo de servicio en el nodo i.
+        # vehicle_time_windows[v] = (earliest_start, latest_end) por vehículo.
+        if time_windows is not None:
+            if len(time_windows) != n:
+                raise ValueError(f"time_windows debe tener {n} elementos")
+            svc = service_times if service_times is not None else [0] * n
+            if len(svc) != n:
+                raise ValueError(f"service_times debe tener {n} elementos")
+
+            def time_callback(from_idx: int, to_idx: int) -> int:
+                u = manager.IndexToNode(from_idx)
+                v = manager.IndexToNode(to_idx)
+                return cost_matrix[u][v] + int(svc[u])
+
+            time_cb = routing.RegisterTransitCallback(time_callback)
+            # horizon: cota superior del cumul. Lo derivamos del max latest tw.
+            horizon = max(int(tw[1]) for tw in time_windows) if time_windows else 86400
+            horizon = max(horizon, 86400)
+            routing.AddDimension(
+                time_cb,
+                horizon,    # slack (waiting allowed)
+                horizon,    # cap del cumul
+                False,      # no force start at 0 → respetar vehicle_time_windows
+                "Time",
+            )
+            time_dim = routing.GetDimensionOrDie("Time")
+            # Ventanas por task
+            for node in range(n):
+                if node == depot_start_idx or node == depot_end_idx:
+                    continue
+                idx = manager.NodeToIndex(node)
+                tw_start, tw_end = int(time_windows[node][0]), int(time_windows[node][1])
+                time_dim.CumulVar(idx).SetRange(tw_start, tw_end)
+            # Ventanas por vehículo en start/end nodes
+            for v in range(num_vehicles):
+                if vehicle_time_windows and v < len(vehicle_time_windows):
+                    s_v, e_v = int(vehicle_time_windows[v][0]), int(vehicle_time_windows[v][1])
+                else:
+                    s_v, e_v = 0, horizon
+                start_idx = routing.Start(v)
+                end_idx   = routing.End(v)
+                time_dim.CumulVar(start_idx).SetRange(s_v, e_v)
+                time_dim.CumulVar(end_idx).SetRange(s_v, e_v)
+                # Minimizar duración total ayuda a la búsqueda
+                routing.AddVariableMinimizedByFinalizer(time_dim.CumulVar(end_idx))
 
         # Paradas opcionales: AddDisjunction con penalty = prize del nodo.
         # Nodos con prize alto son prácticamente obligatorios; nodos con
@@ -303,6 +354,9 @@ class CuOptSolver:
         depot_end_idx: int = 0,
         time_limit: int = 5,
         prizes: list[float] | None = None,
+        time_windows: list[tuple[int, int]] | None = None,
+        service_times: list[int] | None = None,
+        vehicle_time_windows: list[tuple[int, int]] | None = None,
     ) -> dict[str, Any]:
         """
         Resuelve el problema CVRP con NVIDIA cuOpt.
@@ -321,6 +375,9 @@ class CuOptSolver:
         payload = self._build_payload(
             cost_matrix, num_vehicles, demands, capacities,
             depot_start_idx, depot_end_idx, time_limit, prizes,
+            time_windows=time_windows,
+            service_times=service_times,
+            vehicle_time_windows=vehicle_time_windows,
         )
 
         if self._mode == "api_catalog":
@@ -342,6 +399,9 @@ class CuOptSolver:
         depot_end_idx: int,
         time_limit: int,
         prizes: list[float] | None = None,
+        time_windows: list[tuple[int, int]] | None = None,
+        service_times: list[int] | None = None,
+        vehicle_time_windows: list[tuple[int, int]] | None = None,
     ) -> dict:
         """
         Construye el JSON según la especificación oficial de cuOpt.
@@ -371,6 +431,36 @@ class CuOptSolver:
         # en esta etapa (la ventana real se aplica por turno, no por nodo).
         max_time = time_limit * 10_000
 
+        # Vehicle time windows: si se pasan reales se usan; si no, ventana amplia.
+        if vehicle_time_windows:
+            veh_tws = [[int(s), int(e)] for (s, e) in vehicle_time_windows]
+        else:
+            veh_tws = [[0, max_time]] * num_vehicles
+
+        # Cuando hay time windows en tasks, cuOpt necesita una travel_time_matrix
+        # explícita (puede ser la misma cost_matrix si los costos ya están en segundos).
+        travel_time_matrix = {"data": {"1": cost_matrix}} if time_windows else None
+
+        # Task time windows + service times (solo si se proveen)
+        task_tws = None
+        svc_times_tasks = None
+        if time_windows is not None:
+            task_tws = [[int(time_windows[i][0]), int(time_windows[i][1])] for i in task_indices]
+        if service_times is not None:
+            svc_times_tasks = [int(service_times[i]) for i in task_indices]
+
+        task_data: dict = {
+            "task_locations": task_indices,
+            "task_ids":       task_ids,
+            # demand[dim][task] — una sola dimensión: [[dem_t0, dem_t1, ...]]
+            "demand": [[int(demands[i]) for i in task_indices]],
+            # prizes: valor por tarea — el solver las visita si el premio
+            # justifica el desvío. Sin prizes → todas son obligatorias.
+            **({"prizes": [int(prizes[i]) for i in task_indices]} if prizes else {}),
+            **({"task_time_windows": task_tws} if task_tws is not None else {}),
+            **({"service_times": svc_times_tasks} if svc_times_tasks is not None else {}),
+        }
+
         data: dict = {
             "cost_waypoint_graph_data":        None,
             "travel_time_waypoint_graph_data": None,
@@ -379,27 +469,19 @@ class CuOptSolver:
             "cost_matrix_data": {
                 "data": {"1": cost_matrix}
             },
-            "travel_time_matrix_data": None,
+            "travel_time_matrix_data": travel_time_matrix,
             "fleet_data": {
                 "vehicle_locations":     [[depot_start_idx, depot_end_idx]] * num_vehicles,
                 "vehicle_ids":           vehicle_ids,
                 # capacities[dim][v] — una sola dimensión: [[cap_v0, cap_v1, ...]]
                 "capacities":            [[int(c) for c in capacities]],
-                "vehicle_time_windows":  [[0, max_time]] * num_vehicles,
+                "vehicle_time_windows":  veh_tws,
                 # vehicle_types indica qué matriz de costos usa cada vehículo.
                 # Todos usan el tipo 1 (único tipo definido en cost_matrix_data).
                 # Requerido por la API cuando la key del mapa de matrices no es 0.
                 "vehicle_types":         [1] * num_vehicles,
             },
-            "task_data": {
-                "task_locations": task_indices,
-                "task_ids":       task_ids,
-                # demand[dim][task] — una sola dimensión: [[dem_t0, dem_t1, ...]]
-                "demand": [[int(demands[i]) for i in task_indices]],
-                # prizes: valor por tarea — el solver las visita si el premio
-                # justifica el desvío. Sin prizes → todas son obligatorias.
-                **({"prizes": [int(prizes[i]) for i in task_indices]} if prizes else {}),
-            },
+            "task_data": task_data,
             "solver_config": {
                 "time_limit":  float(time_limit),
                 "objectives": {

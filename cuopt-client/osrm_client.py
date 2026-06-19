@@ -25,11 +25,13 @@ import requests
 logger = logging.getLogger(__name__)
 
 # Máximo de locations por llamada a la Table API de OSRM.
-# El servidor está configurado con --max-table-size 10000,
-# pero matrices muy grandes consumen mucha RAM. 500 es un límite
-# conservador que cubre cualquier circuito de Montevideo (~100 contenedores)
-# con margen amplio para el depósito + camiones.
-_MAX_TABLE_SIZE = 500
+# El servidor ECS está configurado con --max-table-size 10000 (ver
+# terraform/ecs.tf), así que el client puede pedir matrices grandes.
+# 5000 cubre cualquier consolidación realista para el régimen Regime C
+# (mega-scale: ~1,000 nodos por solve, límite de cuOpt cloud API).
+# Self-hosted cuOpt puede ir hasta 10,000+ nodos — en ese caso subir este cap
+# al límite del server (10000) o implementar matrix stitching por chunks.
+_MAX_TABLE_SIZE = 5000
 
 _DEFAULT_TIMEOUT = 30.0  # segundos
 

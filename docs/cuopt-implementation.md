@@ -486,3 +486,117 @@ aws lambda invoke \
 aws logs tail /aws/lambda/smartwaste-dev-route-optimizer \
   --since 5m --region us-east-1 --follow
 ```
+
+---
+
+## 13. Multi-circuit consolidation (solve agrupado)
+
+Desde v1.x, el route-optimizer Lambda agrupa circuitos del mismo depósito en
+un único solve consolidado de cuOpt/OR-Tools en lugar de procesarlos uno por
+uno. Esto desbloquea la ventaja de calidad de cuOpt en problemas de mayor
+tamaño y fleet más grande (Regimen B de `docs/cuopt.md`, +3–5% mejor cost).
+
+### Cuándo se activa
+
+- **Event `{"circuit_id": "..."}`** (override explícito): NO se consolida.
+  Llama directamente a `_optimize_circuit()` como antes.
+- **Event `{"shift": "morning"}` o `{}`**: SE consolida. El handler:
+  1. Llama `_get_circuits_for_shift(shift)` (sin cambios).
+  2. Pre-fetch de containers y trucks por circuit (`_prefetch_circuit_data`).
+  3. Agrupa con `_group_circuits_by_depot_shift()`: bin-packing por depósito
+     respetando `MAX_LOCATIONS_PER_GROUP` (default 500 = límite OSRM).
+  4. Para cada grupo:
+     - **Si `len(circuits) < MIN_CIRCUITS_FOR_CONSOLIDATION`** (default 2):
+       cae al path single-circuit (`_optimize_circuit` por cada circuit_id).
+     - **Si no**: `_optimize_circuit_group()` ejecuta UN solo solve para todos
+       los circuits del grupo.
+
+### Cómo se resuelve un grupo
+
+1. Concatena containers de todos los circuits del grupo en un array
+   `containers_global` (cada uno mantiene su `circuit_id` original).
+2. Pool de trucks: todos los idle trucks de todos los circuits del grupo
+   entran como flota compartida. cuOpt/OR-Tools decide qué truck atiende
+   qué container.
+3. Una sola llamada a OSRM para la matriz N×N consolidada (depot + todos
+   los containers + depot).
+4. Baseline secuencial CSV **por origin circuit**: se calcula el costo de
+   visitar solo los containers de cada circuit en orden Intendencia,
+   usando la misma matriz consolidada para que el `distance_improvement_pct`
+   siga siendo comparable con el baseline del paper (Sec. IX).
+5. Una sola llamada al solver con todos los containers + flota pooled.
+6. **Atribución por dominante**: cada ruta se atribuye al
+   `dominant_circuit_id` = mayoría de stops por origen. Los `origin_circuit_ids`
+   completos (lista) también se persisten para análisis cross-circuit.
+
+### Cambios en el DynamoDB Route item
+
+Los items en `smartwaste-routes` ahora tienen dos campos adicionales:
+
+```json
+{
+  "route_id": "uuid",
+  "truck_id": "T-001",
+  "circuit_id": "A_DU_001",          // dominant_circuit_id en modo consolidado
+  "group_id": "morning-felipe_cardoso-0",  // null en single-circuit
+  "origin_circuit_ids": ["A_DU_001", "A_DU_002"],  // todos los origins que aportaron stops
+  "...": "..."
+}
+```
+
+El GSI `circuit-index` sigue funcionando: queries por `circuit_id` retornan
+las rutas atribuidas a ese circuit (las dominantes). Si una ruta visitó
+containers de circuit X pero su dominante es circuit Y, esa ruta NO aparece
+al consultar X — pero el `active_route_id` en `smartwaste-trucks` sigue
+apuntando correctamente al route_id (el driver app se entera vía
+truck_id, no vía circuit_id).
+
+### WebSocket notifications en modo consolidado
+
+`_optimize_circuit_group` notifica a TODOS los origin circuits que aportaron
+stops a una ruta (no solo al dominante), de modo que cualquier driver
+suscripto a cualquier circuit afectado recibe la actualización. Si una ruta
+cruza circuits A y B, drivers en ambos canales reciben el `route_summary`.
+
+### Variables de entorno
+
+| Variable | Default | Descripción |
+|---|---|---|
+| `MAX_LOCATIONS_PER_GROUP` | 500 | Cap de matrix OSRM (containers + depot). Bajarlo fuerza más grupos chicos; subirlo requiere matrix stitching no implementado. |
+| `MIN_CIRCUITS_FOR_CONSOLIDATION` | 2 | Mínimo de circuits en un grupo para activar el solve consolidado. Subirlo a 3+ deshabilita consolidación para grupos chicos. |
+
+### Verificación
+
+Después de invocar la Lambda con un event `{"shift": "morning"}`, esperá ver
+en CloudWatch logs:
+
+```
+Grouping morning: 38 circuits → 8 groups (sizes: [('morning-felipe_cardoso-0', 5, 410), ...])
+[group=morning-felipe_cardoso-0] 5 circuitos, 410 contenedores, 7 vehículo(s) pooled
+[group=morning-felipe_cardoso-0] Baseline A_DU_001: 12.3 km, 18.5 min, 82 paradas
+...
+[group=morning-felipe_cardoso-0] Ruta guardada: route_id=... dom=A_DU_001 origins=['A_DU_001', 'A_DU_002']
+```
+
+La respuesta del invoke incluye los campos nuevos `consolidated` (contador) y
+`group_id` por result entry:
+
+```bash
+aws lambda invoke ... /tmp/out.json
+jq '.consolidated, (.results[0] | {circuit_id, group_id, consolidated})' /tmp/out.json
+```
+
+### Limitaciones de v1
+
+- **OSRM 500-location hard cap**: grupos limitados a ≤5–6 circuitos típicos.
+  Para multi-municipality (Vector 5.3 de `docs/cuopt.md`) habrá que implementar
+  matrix stitching en `osrm_client.py`.
+- **Heterogeneous depots dentro de un grupo**: out of scope. Como agrupamos
+  POR depósito, todos los vehículos del grupo comparten `[start, end]` en el
+  payload de cuOpt. Cross-depot consolidation requeriría cambiar `vehicle_locations`
+  en `vrp_solver._build_payload`.
+- **Vehicle skills / task-matching**: no se usan. cuOpt asigna libremente
+  cualquier truck a cualquier container del grupo. Si operaciones requiere
+  "driver X solo hace circuit Y", agregar `vehicle_types` heterogéneos.
+- **Time windows por shift**: no se promueven a constraints duras del VRP.
+  Es Vector 5.2 de `docs/cuopt.md`.

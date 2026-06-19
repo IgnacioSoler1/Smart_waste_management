@@ -526,6 +526,14 @@ resource "aws_lambda_function" "route_optimizer" {
       WS_ENDPOINT       = "https://${aws_apigatewayv2_api.smartwaste_ws.id}.execute-api.${local.region}.amazonaws.com/dev"
       # Data Lake: publicar resumen de rutas en Firehose (bufferiza → S3 Bronze)
       ROUTE_RESULTS_FIREHOSE = aws_kinesis_firehose_delivery_stream.route_firehose.name
+      # Multi-circuit consolidation (Vector 5.1 de docs/cuopt.md):
+      # agrupa circuitos del mismo depósito en un único solve consolidado.
+      # MAX_LOCATIONS_PER_GROUP es el cap por matrix OSRM (≤500 por defecto).
+      # MIN_CIRCUITS_FOR_CONSOLIDATION=2 significa que con 1 circuito se cae al
+      # path single-circuit original (sin overhead). Subirlo a 3+ deshabilita
+      # efectivamente la consolidación para grupos chicos.
+      MAX_LOCATIONS_PER_GROUP        = tostring(var.max_locations_per_group)
+      MIN_CIRCUITS_FOR_CONSOLIDATION = tostring(var.min_circuits_for_consolidation)
     }
   }
 

@@ -1,8 +1,9 @@
 """
-experiment_megascale.py — SmartWaste MVD
+benchmark_megascale.py — SmartWaste MVD
 
-Test final: 1000 nodos (límite cloud API), multi-vehicle, capacidad tight.
+Test: 1000 nodos (límite cloud API), multi-vehicle, capacidad tight.
 Régimen Gehring & Homberger donde cuOpt tiene sus world records.
+Genera los números de §2 Regime C en docs/cuopt.md.
 """
 
 from __future__ import annotations

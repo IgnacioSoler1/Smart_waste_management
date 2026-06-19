@@ -60,4 +60,28 @@ variable "cuopt_server_url" {
   default     = ""
 }
 
+# ─────────────────────────────────────────────────────────
+# Multi-circuit consolidation (Vector 5.1 de docs/cuopt.md)
+# ─────────────────────────────────────────────────────────
+
+variable "max_locations_per_group" {
+  description = "Cap de locations por solve consolidado en route-optimizer. OSRM client soporta hasta 5000 (server ECS hasta 10000). El binding real es cuOpt: cloud API admite ~1000 nodos por solve, self-hosted ~10000+. Default 1000 = límite de cloud API. Si cuopt_mode='self_hosted' se puede subir a 5000+. Bajar este número fuerza más grupos chicos (menos beneficio de consolidación)."
+  type        = number
+  default     = 1000
+  validation {
+    condition     = var.max_locations_per_group > 10 && var.max_locations_per_group <= 10000
+    error_message = "max_locations_per_group debe estar entre 11 y 10000 (hard-limit OSRM server)."
+  }
+}
+
+variable "min_circuits_for_consolidation" {
+  description = "Cantidad mínima de circuitos en un grupo para activar el solve consolidado. Con 1 circuito se cae al path single-circuit original. Subirlo a 3+ deshabilita la consolidación para grupos de 2 (útil para A/B test conservador)."
+  type        = number
+  default     = 2
+  validation {
+    condition     = var.min_circuits_for_consolidation >= 1
+    error_message = "min_circuits_for_consolidation debe ser ≥1."
+  }
+}
+
 
