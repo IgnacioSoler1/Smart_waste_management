@@ -502,6 +502,92 @@ vs OR-Tools' 1,050), confirming they are early-search noise.
 advantage (+6.33%) for the lowest wall-clock cost (14.3s). Past TL=5s,
 cuOpt's cost plateaus while OR-Tools keeps improving, narrowing the gap.
 
+#### Convergence: time to reach equal quality
+
+The previous subsections all compare cuOpt and OR-Tools at a *fixed time
+budget* — usually 10 s — and report the cost each achieves. A
+complementary and arguably more honest question is the inverse: **how
+much wall-clock time does each solver need to reach the same solution
+quality?** That metric isolates what the solvers actually do under the
+hood from the operator-chosen `time_limit` parameter.
+
+We answered it with `benchmark_convergence.py`, which combines two
+measurement techniques:
+
+- **OR-Tools** is instrumented with `routing.AddAtSolutionCallback()` to
+  log `(elapsed_s, cost)` on every improvement during a single 60-second
+  solve. This yields a continuous convergence trajectory (typically
+  600–7,500 improvement events captured per run, depending on problem
+  size).
+- **cuOpt** is sampled at six time-limit values (2, 3, 5, 10, 30, 60 s),
+  since its REST API does not expose intermediate solutions. Each sample
+  is a fresh solve; the reported wall-clock includes the ~3–14 s of
+  network + GPU warm-up overhead documented in the previous subsection.
+
+Three representative problem sizes were tested with 2–3 random seeds
+each (cloud cuOpt API, free tier). For each (size, seed) we computed
+the wall-clock time each solver needed to reach a target cost defined
+as `best_observed_cost × (1 + tolerance%)`. Targets that no seed
+reached within the 60-second budget are reported as *never*.
+
+| Size | Target | cuOpt wall (median) | OR-Tools wall (median) | Speedup |
+|---|---|---|---|---|
+| **small** (80 n, 1 truck) — Regime A | best (12,959) | 3.6s | 8.2s | 2.3× |
+| | +3% (13,347) | 3.8s | 15.2s | 4.0× |
+| | +5% (13,606) | 2.9s | 4.0s | 1.4× |
+| | +10% (14,254) | 2.9s | **0.0s** | OR-Tools wins (instant) |
+| **medium** (238 n, 6 trucks) — Regime B | best (24,678) | 42.5s | **never** | ∞ |
+| | +1% (24,924) | 7.1s | **never** | ∞ |
+| | +3% (25,418) | 9.5s | 35.6s | 3.8× |
+| | +5% (25,911) | 5.6s | 16.3s | 2.9× |
+| **large** (949 n, 24 trucks) — Regime B/C | best (65,447) | 64.7s | **never** | ∞ |
+| | +1% (66,101) | 34.5s | **never** | ∞ |
+| | +3% (67,410) | 34.5s | **never** | ∞ |
+| | +5% (68,719) | 14.6s | **never** | ∞ |
+| | +10% (71,991) | 7.1s | 34.3s | **4.8×** |
+
+Three findings emerge:
+
+1. **At small (TSP-like) scale, OR-Tools is competitive or wins for loose
+   quality targets.** `PATH_CHEAPEST_ARC` already returns a solution
+   within +10% of the best almost instantly; cuOpt cannot beat that
+   because of its ~3-second fixed overhead. This confirms the
+   wall-clock crossover (< 12 s SLA → OR-Tools) from the previous
+   subsection.
+
+2. **At medium scale, OR-Tools simply does not reach cuOpt's best
+   quality in 60 seconds.** The "best" and "+1%" targets are
+   unreachable by OR-Tools in the experiment window, even though
+   OR-Tools is using the same time budget that cuOpt does. For
+   reachable targets, cuOpt is 3–4× faster in wall-clock.
+
+3. **At large scale (949 nodes, 24 trucks — the production consolidated
+   regime), OR-Tools is out of contention for any target tighter than
+   +10%.** cuOpt reaches a solution within +5% of best in 14.6 s; the
+   same target is *never* reached by OR-Tools within 60 s of search.
+   For the +10% target (where OR-Tools does eventually catch up), cuOpt
+   is still 4.8× faster.
+
+The finding inverts how the previous tables read: cuOpt's advantage is
+not "5% better solution at TL=10s" — it is "qualities that OR-Tools
+cannot reach at all on large problems within reasonable wall-clock
+budgets". On the consolidated production workload, the operationally
+meaningful metric is the third row: cuOpt produces routes that OR-Tools
+literally cannot replicate in the available time.
+
+Reproduce with:
+
+```bash
+cd cuopt-client/test-performance
+export CUOPT_API_KEY=<nvapi-key>
+python3 -u benchmark_convergence.py
+```
+
+The script writes `results/convergence_<ts>.json` (raw trajectories +
+cuOpt sample points) and `results/convergence_<ts>.png` (convergence
+curves per size). All problems stay within the cloud cuOpt API limit
+(~1,000 nodes per solve), so no EC2 GPU is required.
+
 #### Wall-clock is NOT the same as time-limit
 
 The same data exposes a critical operational fact often overlooked:
@@ -637,6 +723,7 @@ All scripts live in `cuopt-client/test-performance/`:
 | `benchmark_megascale.py` | Single-problem mega-scale at 800–1,000 nodes (Regime C) | `results/megascale_<ts>.json` |
 | `benchmark_consolidation_cloud.py` | Apples-to-apples §5.1 validation: cuOpt consolidated vs OR-Tools consolidated vs OR-Tools sequential. Cloud (cuOpt API Catalog), 3–12 circuits per group by default. `--group-sizes 3,5` reproduces the small-scale run; `--group-sizes 5,8,10,12` reproduces the medium-scale run. | `results/consolidation_cloud_<ts>.json` |
 | `benchmark_consolidation_selfhosted.py` | **Multi-suite harness** (requires self-hosted cuOpt EC2 via `deploy_cuopt_ec2.sh`). Use `--suite {0,A,B,C,all}`. Suites: 0=mega-consolidation 15–30 circuits, A=long TL sweep 10–180s, B=time windows (CVRPTW), **C=short TL cliff 1–10s with 3 seeds for variance**. | `results/supermega_extended_<ts>.json` |
+| `benchmark_convergence.py` | Time-to-equal-quality measurement: OR-Tools instrumented with `AddAtSolutionCallback` to log a continuous convergence trajectory in a single 60-s solve; cuOpt sampled at multiple time-limits. Reports wall-clock needed to reach a target cost defined as `best × (1 + tol%)`. Cloud-only (no EC2 needed). | `results/convergence_<ts>.json` + PNG |
 
 ### 6.5 Reproducing everything
 
@@ -653,6 +740,7 @@ python3 -u benchmark_inflection.py
 python3 -u benchmark_megascale.py
 python3 -u benchmark_consolidation_cloud.py                       # default: 3,5,8,10,12 circuits
 python3 -u benchmark_consolidation_cloud.py --group-sizes 3,5     # reproduce small-scale run
+python3 -u benchmark_convergence.py                               # convergence study (~30 min, cloud-only)
 ```
 
 For self-hosted cuOpt (no cloud API limit, supports 10,000+ nodes):
