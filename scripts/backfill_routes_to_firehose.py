@@ -13,7 +13,7 @@ Uso:
 Opciones:
     --env       Prefijo de recursos (default: smartwaste-dev)
     --region    AWS region (default: us-east-1)
-    --profile   AWS profile (default: personal-smart-recycle)
+    --profile   AWS profile (default: personal-classify)
     --dry-run   Muestra cuántos registros se enviarían sin enviar nada
     --status    Filtro de status: active | superseded | all (default: all)
 """
@@ -37,7 +37,7 @@ def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Backfill rutas de DynamoDB a Kinesis Firehose")
     p.add_argument("--env",     default="smartwaste-dev")
     p.add_argument("--region",  default="us-east-1")
-    p.add_argument("--profile", default="personal-smart-recycle")
+    p.add_argument("--profile", default="personal-classify")
     p.add_argument("--dry-run", action="store_true",
                    help="No envía nada, solo muestra estadísticas")
     p.add_argument("--status",  default="all",

@@ -16,7 +16,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-AWS_PROFILE="${AWS_PROFILE:-personal-smart-recycle}"
+AWS_PROFILE="${AWS_PROFILE:-personal-classify}"
 AWS_REGION="${AWS_REGION:-us-east-1}"
 
 DRY_RUN=""

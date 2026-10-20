@@ -13,7 +13,7 @@
 # Requisitos:
 #   - terraform apply ya ejecutado (tablas DynamoDB deben existir)
 #   - Python 3.11+ con boto3, pyproj
-#   - AWS CLI configurado (profile: personal-smart-recycle)
+#   - AWS CLI configurado (profile: personal-classify)
 # ─────────────────────────────────────────────────────────────
 
 set -euo pipefail
@@ -22,7 +22,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # ── Configuración ───────────────────────────────────────────
-AWS_PROFILE="${AWS_PROFILE:-personal-smart-recycle}"
+AWS_PROFILE="${AWS_PROFILE:-personal-classify}"
 AWS_REGION="${AWS_REGION:-us-east-1}"
 NAME_PREFIX="${NAME_PREFIX:-smartwaste-dev}"
 CONTAINERS_TABLE="${NAME_PREFIX}-containers"
@@ -52,17 +52,23 @@ echo ""
 
 # ── Verificar que Terraform haya sido aplicado ──────────────
 echo "==> [1/3] Verificando que la tabla DynamoDB existe..."
-if ! aws dynamodb describe-table \
+if ! DESCRIBE_OUT=$(aws dynamodb describe-table \
     --table-name "$CONTAINERS_TABLE" \
     --region "$AWS_REGION" \
     --profile "$AWS_PROFILE" \
     --query 'Table.TableStatus' \
-    --output text 2>/dev/null; then
+    --output text 2>&1); then
     echo ""
-    echo "ERROR: La tabla '$CONTAINERS_TABLE' no existe."
-    echo "       Ejecuta 'cd terraform && terraform apply' primero."
+    echo "ERROR: no se pudo leer la tabla '$CONTAINERS_TABLE' con el perfil '$AWS_PROFILE':"
+    echo "       $DESCRIBE_OUT"
+    if [[ "$DESCRIBE_OUT" == *ResourceNotFoundException* ]]; then
+        echo "       La tabla no existe: ejecuta 'cd terraform && terraform apply' primero."
+    else
+        echo "       Revisá el perfil (AWS_PROFILE=...) y las credenciales (aws sts get-caller-identity)."
+    fi
     exit 1
 fi
+echo "    Estado: $DESCRIBE_OUT"
 echo "    Tabla OK."
 echo ""
 

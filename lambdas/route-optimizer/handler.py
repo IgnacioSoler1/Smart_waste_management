@@ -96,6 +96,22 @@ _DEPOTS: dict[str, tuple[float, float]] = {
 }
 _DEFAULT_DEPOT_ID = "felipe_cardoso"
 
+# Alias de depot_id tal como aparecen en data/processed/*.json y en DynamoDB.
+# Antes de este mapeo, los ids reales ("depot_felipe_cardoso",
+# "depot_estacion_transferencia") no matcheaban _DEPOTS y todos los circuitos
+# caían al depósito por defecto.
+_DEPOT_ALIASES: dict[str, str] = {
+    "felipe_cardoso":               "felipe_cardoso",
+    "depot_felipe_cardoso":         "felipe_cardoso",
+    "ruta_102":                     "ruta_102",
+    "depot_estacion_transferencia": "ruta_102",
+    "estacion_transferencia":       "ruta_102",
+}
+
+# Contenedores con fill <= este umbral no entran al solver (prize despreciable),
+# pero sí cuentan para el baseline estático, que visita todos los activos.
+_CANDIDATE_MIN_FILL = 20.0
+
 # ─────────────────────────────────────────────────────────
 # Clientes AWS (reutilizados entre invocaciones)
 # ─────────────────────────────────────────────────────────
@@ -156,22 +172,62 @@ def _get_circuits_for_shift(shift: str) -> list[str]:
 # Helpers: lectura de DynamoDB
 # ─────────────────────────────────────────────────────────
 
+def _resolve_depot(container: dict) -> str:
+    """
+    Devuelve la clave canónica de _DEPOTS para un contenedor.
+
+    Usa depot_id (con alias) si existe; si no, el depósito conocido más cercano
+    a depot_lat/depot_lon (los ítems sembrados por seed_dynamodb.py antes del
+    fix solo traen coordenadas). Cae a _DEFAULT_DEPOT_ID si no hay nada.
+    """
+    raw_id = container.get("depot_id")
+    if raw_id is not None:
+        canonical = _DEPOT_ALIASES.get(str(raw_id))
+        if canonical:
+            return canonical
+    lat, lon = container.get("depot_lat"), container.get("depot_lon")
+    if lat is not None and lon is not None:
+        lat_f, lon_f = float(lat), float(lon)
+        if lat_f != 0.0 or lon_f != 0.0:
+            return min(
+                _DEPOTS,
+                key=lambda k: (_DEPOTS[k][0] - lat_f) ** 2 + (_DEPOTS[k][1] - lon_f) ** 2,
+            )
+    return _DEFAULT_DEPOT_ID
+
+
+def _is_candidate(container: dict) -> bool:
+    """True si el contenedor entra al solver (fill > _CANDIDATE_MIN_FILL)."""
+    return float(container.get("fill_level", 0)) > _CANDIDATE_MIN_FILL
+
+
+def _candidate_nodes(all_containers: list[dict]) -> list[int]:
+    """
+    Índices de nodo (en la matriz construida sobre all_containers con
+    _build_problem) que forman el subproblema del solver:
+    [depot_start] + candidatos + [depot_end].
+    """
+    n = len(all_containers) + 2
+    return [0] + [i + 1 for i, c in enumerate(all_containers) if _is_candidate(c)] + [n - 1]
+
+
+def _submatrix(matrix: list[list], nodes: list[int]) -> list[list]:
+    return [[matrix[a][b] for b in nodes] for a in nodes]
+
+
 def _get_containers(circuit_id: str) -> list[dict]:
     """
-    Retorna contenedores activos del circuito con fill_level > 20%.
+    Retorna TODOS los contenedores activos del circuito.
 
-    Incluye contenedores que no tienen needs_collection=True (fill 20-60%)
-    porque el solver usa prizes para decidir si visitarlos en ruta.
-    Contenedores con fill ≤ 20% se excluyen (prize=0, no vale la pena).
+    El baseline estático los visita a todos; el solver solo recibe los
+    candidatos (fill > _CANDIDATE_MIN_FILL, ver _is_candidate). Los de
+    20-60% entran como opcionales con prize.
     """
     items: list[dict] = []
     kwargs: dict[str, Any] = {
         "IndexName": "circuit-index",
         "KeyConditionExpression": Key("circuit_id").eq(circuit_id),
-        "FilterExpression": (
-            Attr("status").eq("active")
-            & Attr("fill_level").gt(20)
-        ),
+        "FilterExpression": Attr("status").eq("active"),
     }
     while True:
         resp = _tbl_containers.query(**kwargs)
@@ -530,10 +586,11 @@ def _prefetch_circuit_data(circuit_ids: list[str]) -> dict[str, dict]:
 
     Returns:
         dict mapeando circuit_id → {
-            "containers": list[dict],
-            "trucks":     list[dict],
-            "depot_id":   str,
-            "n_total":    int,           # contenedores con fill > 20%
+            "containers":  list[dict],   # todos los activos (baseline + matriz)
+            "trucks":      list[dict],
+            "depot_id":    str,
+            "n_total":     int,          # contenedores activos (tamaño en la matriz)
+            "n_candidates": int,         # contenedores con fill > 20% (van al solver)
             "n_mandatory": int,          # contenedores con fill > 60%
         }
     """
@@ -550,15 +607,16 @@ def _prefetch_circuit_data(circuit_ids: list[str]) -> dict[str, dict]:
             logger.warning("[circuit=%s] Prefetch trucks fallo: %s", cid, exc)
             trucks = []
 
-        depot_id = str(containers[0].get("depot_id", _DEFAULT_DEPOT_ID)) if containers else _DEFAULT_DEPOT_ID
+        depot_id = _resolve_depot(containers[0]) if containers else _DEFAULT_DEPOT_ID
         n_mandatory = sum(1 for c in containers if float(c.get("fill_level", 0)) > 60)
 
         data[cid] = {
-            "containers":  containers,
-            "trucks":      trucks,
-            "depot_id":    depot_id,
-            "n_total":     len(containers),
-            "n_mandatory": n_mandatory,
+            "containers":   containers,
+            "trucks":       trucks,
+            "depot_id":     depot_id,
+            "n_total":      len(containers),
+            "n_candidates": sum(1 for c in containers if _is_candidate(c)),
+            "n_mandatory":  n_mandatory,
         }
     return data
 
@@ -703,10 +761,11 @@ def _optimize_circuit(circuit_id: str) -> dict:
 
     # ── a. Contenedores pendientes ────────────────────────
     try:
-        containers = _get_containers(circuit_id)
+        all_containers = _get_containers(circuit_id)
     except Exception as exc:
         logger.error("%s Error al leer contenedores: %s", prefix, exc, exc_info=True)
         return {"circuit_id": circuit_id, "status": "error", "error": f"dynamo: {exc}"}
+    containers = [c for c in all_containers if _is_candidate(c)]
 
     n_mandatory = sum(1 for c in containers if float(c.get("fill_level", 0)) > 60)
     n_optional  = len(containers) - n_mandatory
@@ -750,24 +809,29 @@ def _optimize_circuit(circuit_id: str) -> dict:
     logger.info("%s %d vehículo(s): %s", prefix, num_vehicles, truck_ids)
 
     # ── d. Depot y locations ──────────────────────────────
-    depot_id     = str(containers[0].get("depot_id", _DEFAULT_DEPOT_ID))
-    depot_coords = _DEPOTS.get(depot_id, _DEPOTS[_DEFAULT_DEPOT_ID])
-    locations, demands, prizes, depot_start_idx, depot_end_idx = _build_problem(
+    # La matriz OSRM cubre todos los activos (baseline); el solver usa la
+    # submatriz de candidatos.
+    depot_id     = _resolve_depot(all_containers[0])
+    depot_coords = _DEPOTS[depot_id]
+    all_locations, _, _, full_start_idx, full_end_idx = _build_problem(
+        all_containers, depot_coords
+    )
+    _, demands, prizes, depot_start_idx, depot_end_idx = _build_problem(
         containers, depot_coords
     )
+    nodes = _candidate_nodes(all_containers)
 
     # ── e. OSRM — bearings + matriz de distancias ─────────
-    depot_indices = {depot_start_idx, depot_end_idx}
     try:
-        bearings = _osrm.get_road_bearings(
-            locations, depot_indices=depot_indices,
+        all_bearings = _osrm.get_road_bearings(
+            all_locations, depot_indices={full_start_idx, full_end_idx},
         )
     except Exception as exc:
         logger.warning("%s No se pudieron obtener bearings, continuando sin ellos: %s", prefix, exc)
-        bearings = None
+        all_bearings = None
 
     try:
-        osrm_result = _osrm.get_distance_matrix(locations, bearings=bearings)
+        osrm_result = _osrm.get_distance_matrix(all_locations, bearings=all_bearings)
     except OSRMError as exc:
         logger.error("%s OSRM error: %s", prefix, exc)
         return {"circuit_id": circuit_id, "status": "error", "error": f"osrm: {exc}"}
@@ -775,13 +839,17 @@ def _optimize_circuit(circuit_id: str) -> dict:
         logger.error("%s OSRM falla inesperada: %s", prefix, exc, exc_info=True)
         return {"circuit_id": circuit_id, "status": "error", "error": f"osrm: {exc}"}
 
-    cost_matrix = [[int(d) for d in row] for row in osrm_result["durations"]]
+    full_cost_matrix = [[int(d) for d in row] for row in osrm_result["durations"]]
 
-    # ── e2. Baseline: ruta original (orden CSV) ────────────
+    # ── e2. Baseline: ruta estática (todos los activos, orden CSV) ──
     baseline = _compute_baseline_csv_order(
-        containers, cost_matrix, osrm_result["distances"],
-        depot_start_idx, depot_end_idx,
+        all_containers, full_cost_matrix, osrm_result["distances"],
+        full_start_idx, full_end_idx,
     )
+
+    cost_matrix      = _submatrix(full_cost_matrix, nodes)
+    distances_matrix = _submatrix(osrm_result["distances"], nodes)
+    bearings         = [all_bearings[k] for k in nodes] if all_bearings is not None else None
     logger.info(
         "%s Baseline CSV: %.1f km, %.1f min, %d paradas",
         prefix,
@@ -830,7 +898,7 @@ def _optimize_circuit(circuit_id: str) -> dict:
                 containers         = containers,
                 depot_coords       = depot_coords,
                 durations_matrix   = cost_matrix,
-                distances_matrix   = osrm_result["distances"],
+                distances_matrix   = distances_matrix,
                 vrp_result         = vrp_result,
                 bearings           = bearings,
                 baseline           = baseline,
@@ -904,12 +972,15 @@ def _optimize_circuit_group(
     prefix = f"[group={group.group_id}]"
 
     # ── a. Concatenar contenedores + pool trucks ────────────
-    containers_global: list[dict] = []
+    # all_containers_global: todos los activos (matriz OSRM + baseline estático).
+    # containers_global:     candidatos (fill > 20%) que recibe el solver.
+    all_containers_global: list[dict] = []
     truck_dicts: list[dict] = []
     for cid in group.circuit_ids:
         d = circuit_data[cid]
-        containers_global.extend(d["containers"])
+        all_containers_global.extend(d["containers"])
         truck_dicts.extend(d["trucks"])
+    containers_global = [c for c in all_containers_global if _is_candidate(c)]
 
     if group.total_mandatory < _MIN_CONTAINERS:
         logger.info("%s Saltando — %d obligatorios totales < mínimo %d",
@@ -942,35 +1013,44 @@ def _optimize_circuit_group(
 
     # ── c. Depot y locations ───────────────────────────────
     depot_coords = _DEPOTS.get(group.depot_id, _DEPOTS[_DEFAULT_DEPOT_ID])
-    locations, demands, prizes, depot_start_idx, depot_end_idx = _build_problem(
+    all_locations, _, _, full_start_idx, full_end_idx = _build_problem(
+        all_containers_global, depot_coords
+    )
+    _, demands, prizes, depot_start_idx, depot_end_idx = _build_problem(
         containers_global, depot_coords
     )
+    nodes = _candidate_nodes(all_containers_global)
 
     # ── d. OSRM — bearings + matriz ────────────────────────
-    depot_indices = {depot_start_idx, depot_end_idx}
     try:
-        bearings = _osrm.get_road_bearings(locations, depot_indices=depot_indices)
+        all_bearings = _osrm.get_road_bearings(
+            all_locations, depot_indices={full_start_idx, full_end_idx},
+        )
     except Exception as exc:
         logger.warning("%s Bearings fallo, continuando sin: %s", prefix, exc)
-        bearings = None
+        all_bearings = None
 
     try:
-        osrm_result = _osrm.get_distance_matrix(locations, bearings=bearings)
+        osrm_result = _osrm.get_distance_matrix(all_locations, bearings=all_bearings)
     except (OSRMError, Exception) as exc:
         logger.error("%s OSRM error: %s", prefix, exc, exc_info=True)
         return [{"circuit_id": cid, "group_id": group.group_id, "status": "error",
                  "error": f"osrm: {exc}"} for cid in group.circuit_ids]
 
-    cost_matrix = [[int(d) for d in row] for row in osrm_result["durations"]]
+    full_cost_matrix = [[int(d) for d in row] for row in osrm_result["durations"]]
 
-    # ── e. Baseline por origin circuit ──────────────────────
+    # ── e. Baseline por origin circuit (todos los activos) ──
     baselines_by_circuit = {
         cid: _baseline_for_origin_circuit(
-            containers_global, cid, cost_matrix, osrm_result["distances"],
-            depot_start_idx, depot_end_idx,
+            all_containers_global, cid, full_cost_matrix, osrm_result["distances"],
+            full_start_idx, full_end_idx,
         )
         for cid in group.circuit_ids
     }
+
+    cost_matrix      = _submatrix(full_cost_matrix, nodes)
+    distances_matrix = _submatrix(osrm_result["distances"], nodes)
+    bearings         = [all_bearings[k] for k in nodes] if all_bearings is not None else None
     for cid, bl in baselines_by_circuit.items():
         logger.info(
             "%s Baseline %s: %.1f km, %.1f min, %d paradas",
@@ -1051,7 +1131,7 @@ def _optimize_circuit_group(
                 containers         = containers_global,
                 depot_coords       = depot_coords,
                 durations_matrix   = cost_matrix,
-                distances_matrix   = osrm_result["distances"],
+                distances_matrix   = distances_matrix,
                 vrp_result         = vrp_result,
                 bearings           = bearings,
                 baseline           = baseline_for_route,

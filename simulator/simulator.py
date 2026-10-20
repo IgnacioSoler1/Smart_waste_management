@@ -48,7 +48,7 @@ logger = logging.getLogger(__name__)
 # ─────────────────────────────────────────────────────────
 
 DEFAULT_TABLE      = "smartwaste-containers"
-DEFAULT_PROFILE    = "personal-smart-recycle"
+DEFAULT_PROFILE    = "personal-classify"
 DEFAULT_REGION     = "us-east-1"
 DEFAULT_INTERVAL   = 300          # segundos entre ciclos
 DEFAULT_DATA_DIR   = "data/processed"

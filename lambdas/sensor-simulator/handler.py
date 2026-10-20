@@ -26,6 +26,7 @@ Environment vars:
 from __future__ import annotations
 
 import hashlib
+from concurrent.futures import ThreadPoolExecutor
 import json
 import logging
 import math
@@ -71,6 +72,9 @@ _iot_data = boto3.client("iot-data")
 # base_rate=2.2 (vs 2.0 default) → promedio de fill ~60%
 # noise_std=4.0 (vs 2.0 default) → más variación entre contenedores vecinos
 _fill_model = FillModel(base_rate=2.2, noise_std=4.0)
+
+# Publicaciones concurrentes a IoT Core (el cliente boto3 es thread-safe).
+_PUBLISH_WORKERS = int(os.environ.get("PUBLISH_WORKERS", "32"))
 
 
 # ─────────────────────────────────────────────────────────
@@ -173,8 +177,11 @@ def lambda_handler(event: dict, context) -> dict:
     if not containers:
         return {"statusCode": 200, "published": 0, "message": "no_active_containers"}
 
-    # ── Simular y publicar ────────────────────────────────
-    published = 0
+    # ── Simular ───────────────────────────────────────────
+    # Primero se calculan todos los payloads (CPU, rápido) y después se publican
+    # en paralelo: publicar 10 937 mensajes en serie (~25 ms c/u) tardaba ~275 s
+    # y rozaba el timeout de 300 s.
+    messages: list[tuple[str, str]] = []
     errors = 0
 
     for c in containers:
@@ -226,21 +233,33 @@ def lambda_handler(event: dict, context) -> dict:
                 "longitude": float(c.get("longitude", -56.1)),
             }
 
-            # Publicar a IoT Core
-            topic = f"{_IOT_TOPIC_PREFIX}/{container_id}"
-            _iot_data.publish(
-                topic=topic,
-                qos=0,
-                payload=json.dumps(payload),
-            )
-            published += 1
+            messages.append((f"{_IOT_TOPIC_PREFIX}/{container_id}", json.dumps(payload)))
 
         except Exception as exc:
             errors += 1
             if errors <= 5:
                 logger.warning(
-                    "[%s] Error publicando %s: %s", request_id, container_id, exc
+                    "[%s] Error simulando %s: %s", request_id, container_id, exc
                 )
+
+    # ── Publicar a IoT Core en paralelo ───────────────────
+    def _publish(msg: tuple[str, str]) -> str | None:
+        topic, body = msg
+        try:
+            _iot_data.publish(topic=topic, qos=0, payload=body)
+            return None
+        except Exception as exc:  # se cuentan y se loguean los primeros
+            return f"{topic}: {exc}"
+
+    published = 0
+    with ThreadPoolExecutor(max_workers=_PUBLISH_WORKERS) as pool:
+        for err in pool.map(_publish, messages):
+            if err is None:
+                published += 1
+            else:
+                errors += 1
+                if errors <= 5:
+                    logger.warning("[%s] Error publicando %s", request_id, err)
 
     logger.info(
         "[%s] Completado: %d publicados, %d errores de %d contenedores",

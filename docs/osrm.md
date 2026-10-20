@@ -480,7 +480,7 @@ cd osrm/
 
 # 2. Reconstruir la imagen ECR con los nuevos datos
 cd ..
-aws ecr get-login-password --region us-east-1 --profile personal-smart-recycle \
+aws ecr get-login-password --region us-east-1 --profile personal-classify \
   | docker login --username AWS --password-stdin \
       <YOUR_AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com
 
@@ -501,7 +501,7 @@ aws ecs update-service \
   --service smartwaste-dev-osrm \
   --force-new-deployment \
   --region us-east-1 \
-  --profile personal-smart-recycle
+  --profile personal-classify
 ```
 
 ECS descarta el task viejo, arranca uno nuevo con la imagen actualizada, y lo marca como healthy cuando el health check (`/nearest`) responde HTTP 200.
@@ -560,13 +560,13 @@ aws ecs describe-services \
   --cluster smartwaste-dev-cluster \
   --services smartwaste-dev-osrm \
   --region us-east-1 \
-  --profile personal-smart-recycle \
+  --profile personal-classify \
   --query 'services[0].{Status:status,Running:runningCount,Desired:desiredCount}'
 
 # ── Rebuild y deploy a producción (tras cambiar truck-profile.lua o actualizar datos) ──
 
 # Login ECR
-aws ecr get-login-password --region us-east-1 --profile personal-smart-recycle \
+aws ecr get-login-password --region us-east-1 --profile personal-classify \
   | docker login --username AWS --password-stdin \
       <YOUR_AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com
 
@@ -588,10 +588,10 @@ aws ecs update-service \
   --service smartwaste-dev-osrm \
   --force-new-deployment \
   --region us-east-1 \
-  --profile personal-smart-recycle
+  --profile personal-classify
 
 # Seguir los logs del nuevo task
 aws logs tail /ecs/smartwaste-dev/osrm --follow \
   --region us-east-1 \
-  --profile personal-smart-recycle
+  --profile personal-classify
 ```

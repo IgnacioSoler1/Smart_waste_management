@@ -17,7 +17,7 @@ Modos de uso:
 Opciones:
   --env          Prefijo de tablas DynamoDB (default: smartwaste-dev)
   --region       AWS region (default: us-east-1)
-  --profile      AWS profile (default: personal-smart-recycle)
+  --profile      AWS profile (default: personal-classify)
   --fill-pct     Porcentaje de fill para los contenedores simulados (default: 75)
   --fraction     Fracción de contenedores del circuito que se llevan a --fill-pct (default: 0.6)
   --min-containers  Mínimo de contenedores >60% para optimizar (debe coincidir con Lambda, default: 5)
@@ -47,7 +47,7 @@ def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Seed fill levels y genera rutas optimizadas")
     p.add_argument("--env",             default="smartwaste-dev")
     p.add_argument("--region",          default="us-east-1")
-    p.add_argument("--profile",         default="personal-smart-recycle")
+    p.add_argument("--profile",         default="personal-classify")
     p.add_argument("--fill-pct",        type=int,   default=75,
                    help="Fill level simulado para contenedores seleccionados (default: 75)")
     p.add_argument("--fraction",        type=float, default=0.6,

@@ -42,7 +42,7 @@ from simulator.fill_model import FillModel  # noqa: E402
 BATCH_SIZE   = 25
 MAX_RETRIES  = 5
 DEFAULT_TABLE   = "smartwaste-containers"
-DEFAULT_PROFILE = "personal-smart-recycle"
+DEFAULT_PROFILE = "personal-classify"
 DEFAULT_REGION  = "us-east-1"
 NEEDS_COLLECTION_THRESHOLD = 40   # % mínimo para prender la flag
 

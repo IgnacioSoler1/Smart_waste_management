@@ -505,11 +505,13 @@ resource "aws_lambda_function" "route_optimizer" {
 
   # 512 MB: OR-Tools necesita memoria para el grafo VRP. cuOpt en api_catalog
   # no usa memoria local, pero mantener margen por las matrices de distancias.
-  # 300 s: OSRM Table API para ~100 contenedores tarda hasta 30 s; cuOpt/OR-Tools
-  # puede tardar hasta 60 s en circuitos complejos. 300 s cubre casos extremos
-  # (red lenta, circuitos grandes, reintentos) sin bloquear el EventBridge schedule.
+  # 600 s: con la consolidación, un turno de ~60 circuitos produce ~6 grupos de
+  # hasta 1000 nodos (matriz OSRM + bearings + solve ≈ 30 s c/u, ~3 min total),
+  # pero con latencia alta de la cuOpt API Catalog un grupo puede tardar 90-120 s
+  # y la invocación superaba los 300 s (timeouts observados el 2026-10-03).
+  # 600 s deja margen y sigue por debajo del intervalo de 15 min del schedule.
   memory_size = 512
-  timeout     = 300
+  timeout     = 600
 
   environment {
     variables = {
@@ -712,4 +714,111 @@ resource "aws_lambda_permission" "eventbridge_invoke_sensor_simulator" {
   function_name = aws_lambda_function.sensor_simulator.function_name
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.sensor_simulator_schedule.arn
+}
+
+# ─────────────────────────────────────────────────────────
+# osrm-matrix-export (experimentos de la revisión del paper)
+# ─────────────────────────────────────────────────────────
+#
+# Invocación manual, sin schedule. Calcula con el OSRM de Fargate las matrices
+# maestras por (depósito, turno) y las escribe en S3 para los experimentos
+# offline de paper/review-response/experiments/. Corre dentro de la VPC con el
+# mismo SG que route-optimizer, que ya tiene salida al puerto 5000 de OSRM.
+#
+#   aws lambda invoke --function-name smartwaste-dev-osrm-matrix-export \
+#     --cli-read-timeout 900 --profile personal-classify out.json
+
+resource "null_resource" "osrm_matrix_export_build" {
+  triggers = {
+    handler     = filemd5("${path.module}/../lambdas/osrm-matrix-export/handler.py")
+    reqs        = filemd5("${path.module}/../lambdas/osrm-matrix-export/requirements.txt")
+    build_sh    = filemd5("${path.module}/../lambdas/osrm-matrix-export/build.sh")
+    osrm_client = filemd5("${path.module}/../cuopt-client/osrm_client.py")
+    containers  = filemd5("${path.module}/../data/processed/containers_enriched.json")
+  }
+
+  provisioner "local-exec" {
+    command = "bash ${path.module}/../lambdas/osrm-matrix-export/build.sh ${path.module}/.build/osrm-matrix-export"
+  }
+}
+
+data "archive_file" "osrm_matrix_export" {
+  type        = "zip"
+  source_dir  = "${path.module}/.build/osrm-matrix-export"
+  output_path = "${path.module}/.build/osrm-matrix-export.zip"
+  depends_on  = [null_resource.osrm_matrix_export_build]
+}
+
+resource "aws_iam_role" "osrm_matrix_export" {
+  name = "${local.name_prefix}-osrm-matrix-export"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Service = "lambda.amazonaws.com" }
+      Action    = "sts:AssumeRole"
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "osrm_matrix_export_vpc" {
+  role       = aws_iam_role.osrm_matrix_export.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+}
+
+resource "aws_iam_role_policy" "osrm_matrix_export_s3" {
+  name = "s3-write-matrices"
+  role = aws_iam_role.osrm_matrix_export.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Sid      = "WriteMatrices"
+      Effect   = "Allow"
+      Action   = ["s3:PutObject"]
+      Resource = "${aws_s3_bucket.data_lake.arn}/experiments/osrm-matrices/*"
+    }]
+  })
+}
+
+resource "aws_lambda_function" "osrm_matrix_export" {
+  function_name = "${local.name_prefix}-osrm-matrix-export"
+  description   = "Exporta matrices OSRM maestras por (depósito, turno) a S3 para los experimentos del paper"
+  role          = aws_iam_role.osrm_matrix_export.arn
+  runtime       = "python3.11"
+  handler       = "handler.lambda_handler"
+
+  filename         = data.archive_file.osrm_matrix_export.output_path
+  source_code_hash = data.archive_file.osrm_matrix_export.output_base64sha256
+
+  # La tabla más grande (~2 800 nodos) devuelve ~16 M de valores: el parseo
+  # JSON en Python necesita ~1-2 GB. 3008 MB = máximo permitido en esta cuenta
+  # (cuota de Lambda por defecto). 900 s = máximo de Lambda.
+  memory_size = 3008
+  timeout     = 900
+
+  environment {
+    variables = {
+      OSRM_URL       = var.osrm_url
+      OSRM_TIMEOUT_S = "600"
+      OUTPUT_BUCKET  = aws_s3_bucket.data_lake.bucket
+      OUTPUT_PREFIX  = "experiments/osrm-matrices"
+    }
+  }
+
+  vpc_config {
+    subnet_ids         = aws_subnet.private[*].id
+    security_group_ids = [aws_security_group.route_optimizer_lambda.id]
+  }
+
+  depends_on = [
+    aws_iam_role_policy_attachment.osrm_matrix_export_vpc,
+    aws_iam_role_policy.osrm_matrix_export_s3,
+  ]
+}
+
+resource "aws_cloudwatch_log_group" "osrm_matrix_export" {
+  name              = "/aws/lambda/${aws_lambda_function.osrm_matrix_export.function_name}"
+  retention_in_days = 14
 }

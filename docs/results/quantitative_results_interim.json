@@ -1,0 +1,158 @@
+{
+  "generated_at": "2026-10-06T01:43:25.587620+00:00",
+  "data_range": {
+    "first_date": "2026-10-02",
+    "last_date": "2026-10-04",
+    "days_analyzed": 3,
+    "total_circuit_days": 389
+  },
+  "table1_operational_performance": {
+    "_note": "Equivalent to paper Table 1 \u2014 now computed over full history",
+    "total_unique_circuits": 133,
+    "mean_circuits_per_day": 129.7,
+    "total_containers_monitored": 10937,
+    "mean_containers_per_circuit": 81.6,
+    "mean_containers_above_threshold": 80.1,
+    "mean_sequential_baseline_distance_km": 115.8,
+    "mean_optimized_route_distance_km": 46.2,
+    "mean_distance_reduction_pct": 55.2,
+    "median_distance_reduction_pct": 60.0,
+    "stddev_distance_reduction_pct": 25.9,
+    "mean_duration_reduction_pct": 58.7,
+    "mean_containers_skipped_abs": 14.9,
+    "mean_containers_skipped_pct": 16.3,
+    "total_distance_saved_km": 27105.4,
+    "total_baseline_km": 45064.0,
+    "total_optimized_km": 17958.6
+  },
+  "table2_by_shift": {
+    "_note": "Equivalent to paper Table 2 \u2014 per-shift breakdown",
+    "shifts": [
+      {
+        "shift": "afternoon",
+        "avg_circuits_per_day": 10,
+        "mean_distance_reduction_pct": 52.1,
+        "mean_containers_skipped_pct": 9.7
+      },
+      {
+        "shift": "morning",
+        "avg_circuits_per_day": 58,
+        "mean_distance_reduction_pct": 64.1,
+        "mean_containers_skipped_pct": 19.8
+      },
+      {
+        "shift": "night",
+        "avg_circuits_per_day": 61.7,
+        "mean_distance_reduction_pct": 47.4,
+        "mean_containers_skipped_pct": 14.2
+      }
+    ]
+  },
+  "paper_comparison": {
+    "_note": "Original paper values (5-day average) vs current results",
+    "mean_distance_reduction_pct": {
+      "paper_5d": 51.0,
+      "now": 55.2
+    },
+    "median_distance_reduction_pct": {
+      "paper_5d": 51.5,
+      "now": 60.0
+    },
+    "mean_baseline_distance_km": {
+      "paper_5d": 104.7,
+      "now": 115.8
+    },
+    "mean_optimized_distance_km": {
+      "paper_5d": 48.5,
+      "now": 46.2
+    },
+    "mean_containers_skipped_abs": {
+      "paper_5d": 9.3,
+      "now": 14.9
+    },
+    "mean_containers_skipped_pct": {
+      "paper_5d": 12.7,
+      "now": 16.3
+    },
+    "by_shift_morning_dist_reduction_pct": {
+      "paper_5d": 58.7,
+      "now": 64.1
+    },
+    "by_shift_afternoon_dist_reduction_pct": {
+      "paper_5d": 48.1,
+      "now": 52.1
+    },
+    "by_shift_night_dist_reduction_pct": {
+      "paper_5d": 43.8,
+      "now": 47.4
+    }
+  },
+  "daily_breakdown": [
+    {
+      "date": "2026-10-02",
+      "circuits_with_routes": 133,
+      "containers_reporting": 10937,
+      "avg_fill_level": 57.6,
+      "avg_distance_improvement_pct": 54.5,
+      "total_distance_saved_km": 8985.7,
+      "total_stops_skipped": 1951
+    },
+    {
+      "date": "2026-10-03",
+      "circuits_with_routes": 133,
+      "containers_reporting": 10937,
+      "avg_fill_level": 51.2,
+      "avg_distance_improvement_pct": 53.3,
+      "total_distance_saved_km": 8985.6,
+      "total_stops_skipped": 1864
+    },
+    {
+      "date": "2026-10-04",
+      "circuits_with_routes": 123,
+      "containers_reporting": 10937,
+      "avg_fill_level": 43.1,
+      "avg_distance_improvement_pct": 58.1,
+      "total_distance_saved_km": 9134.0,
+      "total_stops_skipped": 1998
+    }
+  ],
+  "statistics": {
+    "_note": "Unidad de an\u00e1lisis = circuito-d\u00eda. IC 95% bootstrap percentil de la media (10000 remuestreos, seed 20260926). Wilcoxon signed-rank pareado baseline vs optimizado, una cola.",
+    "n_circuit_days": 389,
+    "distance_reduction_pct": {
+      "mean": 55.21,
+      "sd": 25.91,
+      "median": 60.0,
+      "ci95": [
+        52.61,
+        57.75
+      ]
+    },
+    "duration_reduction_pct": {
+      "mean": 58.74,
+      "sd": 23.52,
+      "median": 62.0,
+      "ci95": [
+        56.41,
+        61.07
+      ]
+    },
+    "wilcoxon_distance_km": {
+      "n_pairs": 389,
+      "statistic_w_plus": 75344.0,
+      "p_value": 4.3275943144961735e-64,
+      "rank_biserial_r": 0.987
+    },
+    "wilcoxon_duration_min": {
+      "n_pairs": 389,
+      "statistic_w_plus": 75537.0,
+      "p_value": 9.896585637545917e-65,
+      "rank_biserial_r": 0.992
+    },
+    "observed_mean_fill_pct": {
+      "mean_of_daily_means": 50.6,
+      "min_daily": 43.1,
+      "max_daily": 57.6
+    }
+  }
+}

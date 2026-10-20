@@ -36,7 +36,7 @@ BATCH_SIZE = 25          # Límite hard de DynamoDB para batch_write_item
 MAX_RETRIES = 5          # Reintentos máximos para UnprocessedItems
 RETRY_BASE_DELAY = 0.5   # Segundos — se duplica en cada reintento (backoff exponencial)
 DEFAULT_TABLE = "smartwaste-containers"
-DEFAULT_PROFILE = "personal-smart-recycle"
+DEFAULT_PROFILE = "personal-classify"
 DEFAULT_INPUT = "data/processed/containers_enriched.json"
 DEFAULT_CAPACITY_LITERS = 2400
 
@@ -84,6 +84,7 @@ def build_dynamo_item(raw: dict[str, Any]) -> dict[str, Any]:
       latitude        (N)  WGS84
       longitude       (N)  WGS84
       zone            (S)  'east' | 'west'
+      depot_id        (S)  id del depot (ver data/processed/fixed_locations.json)
       depot_name      (S)  nombre del depot asignado al circuito
       depot_lat       (N)  coordenada del depot
       depot_lon       (N)
@@ -106,6 +107,7 @@ def build_dynamo_item(raw: dict[str, Any]) -> dict[str, Any]:
         "latitude":        to_decimal(raw["latitude"]),
         "longitude":       to_decimal(raw["longitude"]),
         "zone":            str(raw.get("zone", "")),
+        "depot_id":        str(depot_id),
         "depot_name":      str(depot["name"]),
         "depot_lat":       to_decimal(depot["latitude"]),
         "depot_lon":       to_decimal(depot["longitude"]),
@@ -344,7 +346,7 @@ Ejemplos:
   # Carga real en entorno dev (perfil AWS nombrado)
   python data/scripts/seed_dynamodb.py \\
       --table-name smartwaste-dev-containers \\
-      --profile personal-smart-recycle
+      --profile personal-classify
 
   # Carga en producción
   python data/scripts/seed_dynamodb.py \\

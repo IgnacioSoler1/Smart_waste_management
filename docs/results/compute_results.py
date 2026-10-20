@@ -8,12 +8,21 @@ full available history instead of just 5 days.
 
 Usage:
     python3 docs/results/compute_results.py
+    python3 docs/results/compute_results.py --since 2026-09-28 --label interim
+    python3 docs/results/compute_results.py --since 2026-09-28 --until 2026-10-12 --label final
 
-Output:
+Output (sin --label):
     docs/results/quantitative_results.json
+Output (con --label X):
+    docs/results/quantitative_results_X.json   agregados + IC 95% + Wilcoxon
+    docs/results/circuit_days_X.csv            una fila por circuito-día (insumo de analyze_results.py)
+    docs/results/summary_X.md                  resumen legible para compartir
 """
 
+import argparse
+import csv
 import json
+import random
 import statistics
 import sys
 from collections import defaultdict
@@ -29,7 +38,18 @@ AWS_PROFILE = "personal-classify"
 REGION = "us-east-1"
 MIN_FILE_SIZE = 10_000  # bytes — stub files from before the pipeline was live are ~684 bytes
 
-OUTPUT_FILE = Path(__file__).parent / "quantitative_results.json"
+RESULTS_DIR = Path(__file__).parent
+OUTPUT_FILE = RESULTS_DIR / "quantitative_results.json"
+
+BOOTSTRAP_RESAMPLES = 10_000
+BOOTSTRAP_SEED = 20260926
+
+CIRCUIT_DAY_FIELDS = [
+    "date", "circuit_id", "zone", "shift",
+    "baseline_distance_km", "optimized_distance_km", "distance_improvement_pct",
+    "baseline_duration_min", "optimized_duration_min", "duration_improvement_pct",
+    "baseline_stops", "optimized_stops", "stops_skipped",
+]
 
 
 def list_daily_files(s3: Any) -> list[str]:
@@ -51,13 +71,62 @@ def date_from_key(key: str) -> str:
     return Path(key).stem  # "analytics-results/daily/2026-05-15.json" → "2026-05-15"
 
 
-def main() -> None:
+def bootstrap_ci(values: list[float], level: float = 0.95) -> tuple[float, float]:
+    """IC percentil bootstrap de la media (semilla fija, reproducible)."""
+    rng = random.Random(BOOTSTRAP_SEED)
+    n = len(values)
+    means = sorted(
+        sum(values[rng.randrange(n)] for _ in range(n)) / n
+        for _ in range(BOOTSTRAP_RESAMPLES)
+    )
+    lo = means[int((1 - level) / 2 * BOOTSTRAP_RESAMPLES)]
+    hi = means[int((1 + level) / 2 * BOOTSTRAP_RESAMPLES) - 1]
+    return round(lo, 2), round(hi, 2)
+
+
+def paired_wilcoxon(baseline: list[float], optimized: list[float]) -> dict:
+    """Wilcoxon signed-rank pareado (H1: optimizado < baseline) + rank-biserial."""
+    try:
+        from scipy.stats import wilcoxon
+    except ImportError:
+        return {"error": "scipy not installed (pip install scipy)"}
+    diffs = [b - o for b, o in zip(baseline, optimized) if b != o]
+    if len(diffs) < 10:
+        return {"error": f"only {len(diffs)} non-zero pairs"}
+    res = wilcoxon(baseline, optimized, alternative="greater", zero_method="wilcox")
+    n = len(diffs)
+    total_rank = n * (n + 1) / 2
+    # rank-biserial r = (W+ - W-) / total; scipy devuelve W+ para alternative='greater'
+    w_plus = float(res.statistic)
+    r_rb = (w_plus - (total_rank - w_plus)) / total_rank
+    return {
+        "n_pairs": n,
+        "statistic_w_plus": w_plus,
+        "p_value": float(res.pvalue),
+        "rank_biserial_r": round(r_rb, 3),
+    }
+
+
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--since", help="Primer día a incluir (YYYY-MM-DD, inclusive)")
+    ap.add_argument("--until", help="Último día a incluir (YYYY-MM-DD, inclusive)")
+    ap.add_argument("--label", help="Sufijo de los archivos de salida (p. ej. interim, final)")
+    return ap.parse_args(argv)
+
+
+def main(argv: list[str] | None = None) -> None:
+    args = parse_args(argv)
     session = boto3.Session(profile_name=AWS_PROFILE, region_name=REGION)
     s3 = session.client("s3")
 
-    daily_keys = list_daily_files(s3)
+    daily_keys = [
+        k for k in list_daily_files(s3)
+        if (not args.since or date_from_key(k) >= args.since)
+        and (not args.until or date_from_key(k) <= args.until)
+    ]
     if not daily_keys:
-        print("No daily Gold JSON files found in S3.", file=sys.stderr)
+        print("No daily Gold JSON files found in S3 for the requested range.", file=sys.stderr)
         sys.exit(1)
 
     print(f"Processing {len(daily_keys)} daily files ({date_from_key(daily_keys[0])} → {date_from_key(daily_keys[-1])})")
@@ -221,8 +290,51 @@ def main() -> None:
         "daily_breakdown": daily_rows,
     }
 
-    OUTPUT_FILE.write_text(json.dumps(results, indent=2, default=str))
-    print(f"\nResults written to: {OUTPUT_FILE}")
+    # ── Incertidumbre y significancia (revisión CAEE: R1, R2, R3, EiC) ─────────
+    fills = [r["avg_fill_level"] for r in daily_rows if r.get("avg_fill_level") is not None]
+    base_min = [c["baseline_duration_min"] for c in circuit_rows]
+    opt_min = [c["optimized_duration_min"] for c in circuit_rows]
+    results["statistics"] = {
+        "_note": "Unidad de análisis = circuito-día. IC 95% bootstrap percentil de la media "
+                 f"({BOOTSTRAP_RESAMPLES} remuestreos, seed {BOOTSTRAP_SEED}). "
+                 "Wilcoxon signed-rank pareado baseline vs optimizado, una cola.",
+        "n_circuit_days": len(circuit_rows),
+        "distance_reduction_pct": {
+            "mean": round(statistics.mean(dist_imp), 2),
+            "sd": round(statistics.stdev(dist_imp), 2) if len(dist_imp) > 1 else None,
+            "median": round(statistics.median(dist_imp), 2),
+            "ci95": bootstrap_ci(dist_imp),
+        },
+        "duration_reduction_pct": {
+            "mean": round(statistics.mean(dur_imp), 2),
+            "sd": round(statistics.stdev(dur_imp), 2) if len(dur_imp) > 1 else None,
+            "median": round(statistics.median(dur_imp), 2),
+            "ci95": bootstrap_ci(dur_imp),
+        },
+        "wilcoxon_distance_km": paired_wilcoxon(base_km, opt_km),
+        "wilcoxon_duration_min": paired_wilcoxon(base_min, opt_min),
+        "observed_mean_fill_pct": {
+            "mean_of_daily_means": round(statistics.mean(fills), 1) if fills else None,
+            "min_daily": round(min(fills), 1) if fills else None,
+            "max_daily": round(max(fills), 1) if fills else None,
+        },
+    }
+
+    suffix = f"_{args.label}" if args.label else ""
+    out_json = RESULTS_DIR / f"quantitative_results{suffix}.json"
+    out_json.write_text(json.dumps(results, indent=2, default=str))
+    print(f"\nResults written to: {out_json}")
+
+    out_csv = RESULTS_DIR / f"circuit_days{suffix}.csv"
+    with out_csv.open("w", newline="") as fh:
+        writer = csv.DictWriter(fh, fieldnames=CIRCUIT_DAY_FIELDS, extrasaction="ignore")
+        writer.writeheader()
+        writer.writerows(circuit_rows)
+    print(f"Circuit-day rows written to: {out_csv}")
+
+    out_md = RESULTS_DIR / f"summary{suffix}.md"
+    out_md.write_text(render_summary_md(results, args))
+    print(f"Summary written to: {out_md}")
 
     # ── Console summary ──────────────────────────────────────────────────────
     t1 = results["table1_operational_performance"]
@@ -244,6 +356,47 @@ def main() -> None:
         print(f"  {s['shift']:12s}: {s['mean_distance_reduction_pct']:5.1f}% reduction, "
               f"{s['mean_containers_skipped_pct']}% skipped  "
               f"(~{s['avg_circuits_per_day']} circuits/day)")
+
+
+def render_summary_md(results: dict, args: argparse.Namespace) -> str:
+    """Resumen corto en markdown para compartir resultados intermedios."""
+    dr = results["data_range"]
+    t1 = results["table1_operational_performance"]
+    st = results["statistics"]
+    d, t = st["distance_reduction_pct"], st["duration_reduction_pct"]
+    wd = st["wilcoxon_distance_km"]
+    fill = st["observed_mean_fill_pct"]
+    lines = [
+        f"# SmartWaste MVD — pipeline results ({args.label or 'all'})",
+        "",
+        f"- Range: {dr['first_date']} → {dr['last_date']} ({dr['days_analyzed']} days, "
+        f"{dr['total_circuit_days']} circuit-days, {t1['total_unique_circuits']} circuits)",
+        f"- Observed mean fill level: {fill['mean_of_daily_means']}% "
+        f"(daily range {fill['min_daily']}–{fill['max_daily']}%)",
+        "",
+        "| Metric | Mean ± SD | Median | 95% CI (bootstrap) |",
+        "|---|---|---|---|",
+        f"| Distance reduction (%) ↑ | {d['mean']} ± {d['sd']} | {d['median']} | [{d['ci95'][0]}, {d['ci95'][1]}] |",
+        f"| Travel-time reduction (%) ↑ | {t['mean']} ± {t['sd']} | {t['median']} | [{t['ci95'][0]}, {t['ci95'][1]}] |",
+        "",
+        f"- Mean static baseline: {t1['mean_sequential_baseline_distance_km']} km; "
+        f"mean optimized: {t1['mean_optimized_route_distance_km']} km",
+        f"- Containers skipped per circuit-day: {t1['mean_containers_skipped_abs']} "
+        f"({t1['mean_containers_skipped_pct']}%)",
+        f"- Wilcoxon (baseline km > optimized km): "
+        + (f"W+={wd['statistic_w_plus']:.0f}, p={wd['p_value']:.2e}, r_rb={wd['rank_biserial_r']}, n={wd['n_pairs']}"
+           if "p_value" in wd else wd.get("error", "n/a")),
+        "",
+        "## By shift",
+        "",
+        "| Shift | Circuits/day | Distance reduction (%) ↑ | Skipped (%) |",
+        "|---|---|---|---|",
+    ]
+    for s in results["table2_by_shift"]["shifts"]:
+        lines.append(f"| {s['shift']} | {s['avg_circuits_per_day']} | "
+                     f"{s['mean_distance_reduction_pct']} | {s['mean_containers_skipped_pct']} |")
+    lines.append("")
+    return "\n".join(lines)
 
 
 if __name__ == "__main__":
